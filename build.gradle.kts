@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.ax.sqltoy"
-version = "0.0.1"
+version = "0.0.2"
 
 dependencies {
     intellijPlatform {
@@ -20,7 +20,8 @@ intellijPlatform {
         }
 
         changeNotes = """
-            Initial version: navigate Java SqlToy sqlId string literals to XML &lt;sql id="..."&gt; definitions.
+            Initial version: navigate Java SqlToy sqlId string literals to XML &lt;sql id="..."&gt; definitions
+            and highlight SQL syntax inside SqlToy XML SQL tags with a bundled lightweight SQL highlighter.
         """.trimIndent()
     }
 }

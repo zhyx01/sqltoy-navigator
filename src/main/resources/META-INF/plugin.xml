@@ -4,7 +4,8 @@
     <vendor email="zhouyx.ax@gmail.com">ax</vendor>
 
     <description><![CDATA[
-        Provides navigation from Java SqlToy sqlId string literals to SqlToy XML SQL definitions.
+        Provides navigation from Java SqlToy sqlId string literals to SqlToy XML SQL definitions,
+        and highlights SQL syntax inside SqlToy XML SQL tags.
         Example: "view_user_list" -> <sql id="view_user_list">...</sql>
     ]]></description>
 
@@ -14,17 +15,28 @@
     <depends>com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <lang.parserDefinition
+                language="SqlToySQL"
+                implementationClass="com.ax.sqltoy.SqlToySqlParserDefinition"/>
+        <lang.syntaxHighlighterFactory
+                language="SqlToySQL"
+                implementationClass="com.ax.sqltoy.SqlToySqlSyntaxHighlighterFactory"/>
         <psi.referenceContributor
                 language="JAVA"
                 implementation="com.ax.sqltoy.SqlToySqlIdReferenceContributor"/>
         <annotator
                 language="JAVA"
                 implementationClass="com.ax.sqltoy.SqlToySqlIdAnnotator"/>
+        <annotator
+                language="XML"
+                implementationClass="com.ax.sqltoy.SqlToyXmlSqlAnnotator"/>
         <codeInsight.lineMarkerProvider
                 language="JAVA"
                 implementationClass="com.ax.sqltoy.SqlToySqlIdLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider
                 language="XML"
                 implementationClass="com.ax.sqltoy.SqlToySqlIdLineMarkerProvider"/>
+        <multiHostInjector
+                implementation="com.ax.sqltoy.SqlToyXmlSqlLanguageInjector"/>
     </extensions>
 </idea-plugin>
