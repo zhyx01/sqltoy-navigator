@@ -10,10 +10,25 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * Injects the lightweight SqlToy SQL language into XML SQL tag text.
+ *
+ * @author ax
+ * @date 2026-05-30
+ */
 public final class SqlToyXmlSqlLanguageInjector implements MultiHostInjector {
 
+    /**
+     * XML text nodes are the only injection hosts this injector handles.
+     */
     private static final List<Class<? extends PsiElement>> XML_TEXT_ELEMENTS = List.of(XmlText.class);
 
+    /**
+     * Injects SqlToy SQL into matching XML text ranges.
+     *
+     * @param registrar language injection registrar
+     * @param context PSI element considered for injection
+     */
     @Override
     public void getLanguagesToInject(
             @NotNull MultiHostRegistrar registrar,
@@ -32,11 +47,17 @@ public final class SqlToyXmlSqlLanguageInjector implements MultiHostInjector {
             return;
         }
 
+        // Inject only the actual SQL body, excluding CDATA wrappers and surrounding whitespace.
         registrar.startInjecting(SqlToySqlLanguage.INSTANCE)
                 .addPlace(null, null, host, textRange)
                 .doneInjecting();
     }
 
+    /**
+     * Returns PSI element classes eligible for injection.
+     *
+     * @return XML text element class list
+     */
     @Override
     public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
         return XML_TEXT_ELEMENTS;

@@ -15,17 +15,36 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Adds gutter navigation markers between Java sqlId literals and XML SQL definitions.
+ *
+ * @author ax
+ * @date 2026-05-30
+ */
 public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerProvider {
 
+    /**
+     * Collects navigation markers for both Java and XML PSI elements.
+     *
+     * @param element PSI element currently being visited
+     * @param result marker collection to append to
+     */
     @Override
     protected void collectNavigationMarkers(
             @NotNull PsiElement element,
             @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result
     ) {
+        // Both directions are handled by one provider because the icon and resolver are shared.
         collectJavaSqlIdMarker(element, result);
         collectXmlSqlMarker(element, result);
     }
 
+    /**
+     * Adds a gutter marker from a Java sqlId literal to XML SQL definitions.
+     *
+     * @param element Java PSI element
+     * @param result marker collection to append to
+     */
     private static void collectJavaSqlIdMarker(
             @NotNull PsiElement element,
             @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result
@@ -40,6 +59,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
             return;
         }
 
+        // Duplicate XML definitions are all exposed as navigation targets.
         List<PsiElement> targets = SqlToySqlIdXmlResolver.findTargets(element.getProject(), sqlId)
                 .stream()
                 .map(SqlToySqlIdXmlResolver.SqlIdTarget::element)
@@ -57,6 +77,12 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
         result.add(builder.createLineMarkerInfo(element));
     }
 
+    /**
+     * Adds a gutter marker from an XML sqlId definition to Java usages.
+     *
+     * @param element XML PSI element
+     * @param result marker collection to append to
+     */
     private static void collectXmlSqlMarker(
             @NotNull PsiElement element,
             @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result
@@ -83,6 +109,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
         List<PsiElement> targets = SqlToyJavaSqlIdResolver.findLiteralTargets(project, sqlId);
         String tooltipText = "SqlToy SQL definition: " + sqlId;
 
+        // When no Java usage exists, keep the marker on the XML definition itself.
         if (targets.isEmpty()) {
             targets = List.of(valueElement);
         } else {

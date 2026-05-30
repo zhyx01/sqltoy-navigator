@@ -33,16 +33,50 @@ src/
   main/
     java/com/ax/sqltoy/
       SqlToyJavaSqlIdResolver.java
-      SqlToySqlIdXmlResolver.java
-      SqlToySqlIdReference.java
-      SqlToySqlIdReferenceContributor.java
+      SqlToyIcons.java
+      SqlToySqlBraceMatcher.java
       SqlToySqlIdAnnotator.java
       SqlToySqlIdLineMarkerProvider.java
-      SqlToyIcons.java
+      SqlToySqlIdReference.java
+      SqlToySqlIdReferenceContributor.java
+      SqlToySqlIdXmlResolver.java
+      SqlToySqlFile.java
+      SqlToySqlFileType.java
+      SqlToySqlLanguage.java
+      SqlToySqlLexer.java
+      SqlToySqlParserDefinition.java
+      SqlToySqlSyntaxHighlighter.java
+      SqlToySqlSyntaxHighlighterFactory.java
+      SqlToySqlTokenTypes.java
+      SqlToyXmlSqlAnnotator.java
+      SqlToyXmlSqlLanguageInjector.java
+      SqlToyXmlSqlTextRanges.java
     resources/
       META-INF/plugin.xml
       icons/sqlToyMarker.svg
 ```
+
+## 类作用
+
+- `SqlToyJavaSqlIdResolver`：解析 Java 字符串中的 SqlToy `sqlId`，并查找 Java 用法。
+- `SqlToySqlIdXmlResolver`：扫描 XML 中的 `<sql id="...">` 定义。
+- `SqlToySqlIdReference`：实现 Java `sqlId` 到 XML 定义的引用跳转和补全。
+- `SqlToySqlIdReferenceContributor`：为 Java 字符串注册 `sqlId` 引用。
+- `SqlToySqlIdAnnotator`：给可解析的 Java `sqlId` 字符串添加下划线提示。
+- `SqlToySqlIdLineMarkerProvider`：提供 Java 和 XML 之间的双向 gutter 图标跳转。
+- `SqlToyIcons`：统一加载插件图标。
+- `SqlToySqlLanguage`：定义插件内置的轻量 SQL 语言。
+- `SqlToySqlFileType`：定义内置 SQL 片段的文件类型。
+- `SqlToySqlFile`：定义内置 SQL 片段的 PSI 文件。
+- `SqlToySqlTokenTypes`：定义内置 SQL lexer 使用的 token 类型。
+- `SqlToySqlLexer`：识别 SQL 关键字、字段、表名、别名、参数、注释和括号。
+- `SqlToySqlSyntaxHighlighter`：把 SQL token 映射到编辑器颜色。
+- `SqlToySqlSyntaxHighlighterFactory`：创建内置 SQL 高亮器。
+- `SqlToySqlParserDefinition`：提供内置 SQL 语言的最小解析定义。
+- `SqlToySqlBraceMatcher`：提供 SQL 括号匹配信息，便于括号插件接管颜色。
+- `SqlToyXmlSqlLanguageInjector`：把 XML `<sql>` 内容注入为内置 SQL 语言。
+- `SqlToyXmlSqlTextRanges`：计算 XML SQL 文本、CDATA 和空白裁剪范围。
+- `SqlToyXmlSqlAnnotator`：在 XML `<sql>` 内容中直接应用 SQL 语法高亮。
 
 ## 匹配规则
 

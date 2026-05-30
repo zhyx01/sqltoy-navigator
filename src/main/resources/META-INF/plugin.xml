@@ -21,6 +21,9 @@
         <lang.syntaxHighlighterFactory
                 language="SqlToySQL"
                 implementationClass="com.ax.sqltoy.SqlToySqlSyntaxHighlighterFactory"/>
+        <lang.braceMatcher
+                language="SqlToySQL"
+                implementationClass="com.ax.sqltoy.SqlToySqlBraceMatcher"/>
         <psi.referenceContributor
                 language="JAVA"
                 implementation="com.ax.sqltoy.SqlToySqlIdReferenceContributor"/>

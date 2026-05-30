@@ -9,8 +9,15 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Maps SqlToy SQL lexer token types to IntelliJ editor color attributes.
+ *
+ * @author ax
+ * @date 2026-05-30
+ */
 public final class SqlToySqlSyntaxHighlighter extends SyntaxHighlighterBase {
 
+    // Theme-backed attributes keep most colors aligned with the current IDE scheme.
     private static final TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey(
             "SQLTOY_SQL_KEYWORD",
             DefaultLanguageHighlighterColors.KEYWORD
@@ -60,6 +67,7 @@ public final class SqlToySqlSyntaxHighlighter extends SyntaxHighlighterBase {
             HighlighterColors.BAD_CHARACTER
     );
 
+    // IntelliJ expects arrays of attributes for each token type.
     private static final TextAttributesKey[] KEYWORD_KEYS = pack(KEYWORD);
     private static final TextAttributesKey[] IDENTIFIER_KEYS = pack(IDENTIFIER);
     private static final TextAttributesKey[] FUNCTION_KEYS = pack(FUNCTION);
@@ -74,13 +82,25 @@ public final class SqlToySqlSyntaxHighlighter extends SyntaxHighlighterBase {
     private static final TextAttributesKey[] BAD_CHARACTER_KEYS = pack(BAD_CHARACTER);
     private static final TextAttributesKey[] EMPTY_KEYS = TextAttributesKey.EMPTY_ARRAY;
 
+    /**
+     * Creates a lexer for syntax highlighting.
+     *
+     * @return fresh SqlToy SQL lexer
+     */
     @Override
     public @NotNull Lexer getHighlightingLexer() {
         return new SqlToySqlLexer();
     }
 
+    /**
+     * Returns editor attributes for a lexer token type.
+     *
+     * @param tokenType token type produced by {@link SqlToySqlLexer}
+     * @return attributes for the token, or an empty array when this plugin should not color it
+     */
     @Override
     public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+        // Bracket tokens intentionally fall through to EMPTY_KEYS for Rainbow Brackets compatibility.
         if (tokenType == SqlToySqlTokenTypes.KEYWORD) {
             return KEYWORD_KEYS;
         }
