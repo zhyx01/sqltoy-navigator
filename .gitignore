@@ -1,0 +1,41 @@
+# Gradle build output
+.gradle/
+build/
+out/
+
+# Gradle local files
+gradle-app.setting
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# IDEA plugin sandbox
+build/idea-sandbox/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Local environment
+.env
+.env.local
