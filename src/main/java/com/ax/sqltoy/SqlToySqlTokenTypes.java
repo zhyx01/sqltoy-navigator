@@ -17,6 +17,7 @@ final class SqlToySqlTokenTypes {
     static final IElementType IDENTIFIER = new SqlToySqlTokenType("IDENTIFIER");
     static final IElementType FUNCTION = new SqlToySqlTokenType("FUNCTION");
     static final IElementType TABLE = new SqlToySqlTokenType("TABLE");
+    static final IElementType TABLE_ALIAS = new SqlToySqlTokenType("TABLE_ALIAS");
     static final IElementType ALIAS = new SqlToySqlTokenType("ALIAS");
     static final IElementType PARAMETER = new SqlToySqlTokenType("PARAMETER");
     static final IElementType STRING = new SqlToySqlTokenType("STRING");

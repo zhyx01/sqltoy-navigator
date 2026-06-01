@@ -37,7 +37,7 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
     );
 
     /**
-     * Forced alias color so aliases do not look like table names.
+     * Forced column alias color so column aliases do not look like table names.
      */
     private static final TextAttributes ALIAS_ATTRIBUTES = createForegroundAttributes(
             new JBColor(new Color(151, 84, 17), new Color(209, 154, 102))
@@ -114,9 +114,11 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
         // Enforced attributes are used only for colors the plugin must keep stable across themes.
         if (tokenType == SqlToySqlTokenTypes.FUNCTION) {
             builder.enforcedTextAttributes(FUNCTION_ATTRIBUTES);
-        } else if (tokenType == SqlToySqlTokenTypes.ALIAS) {
-            builder.enforcedTextAttributes(ALIAS_ATTRIBUTES);
-        } else if (tokenType == SqlToySqlTokenTypes.PARAMETER) {
+        }
+        // else if (tokenType == SqlToySqlTokenTypes.ALIAS) {
+        //     builder.enforcedTextAttributes(ALIAS_ATTRIBUTES);
+        // }
+        else if (tokenType == SqlToySqlTokenTypes.PARAMETER) {
             builder.enforcedTextAttributes(PARAMETER_ATTRIBUTES);
         } else {
             builder.textAttributes(attributes[0]);

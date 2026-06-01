@@ -6,6 +6,8 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Set;
 
 /**
@@ -64,6 +66,9 @@ final class SqlToySqlLexer extends LexerBase {
     private boolean expectingParameterName;
     private boolean tableContextActive;
     private boolean justReadTableName;
+    private int parenthesisDepth;
+    private final Deque<Integer> derivedTableParenthesisDepths = new ArrayDeque<>();
+    private final Deque<TableContextState> tableContextStates = new ArrayDeque<>();
 
     /**
      * Starts lexing a new SQL fragment.
@@ -90,6 +95,9 @@ final class SqlToySqlLexer extends LexerBase {
         this.expectingParameterName = false;
         this.tableContextActive = false;
         this.justReadTableName = false;
+        this.parenthesisDepth = 0;
+        this.derivedTableParenthesisDepths.clear();
+        this.tableContextStates.clear();
         locateToken();
     }
 
@@ -213,14 +221,18 @@ final class SqlToySqlLexer extends LexerBase {
             // Context flags are checked before generic keyword/identifier classification.
             if (expectingParameterName) {
                 tokenType = SqlToySqlTokenTypes.PARAMETER;
-            } else if ((expectingAlias || expectingTableAlias) && !keyword) {
+            } else if (expectingTableAlias && !keyword) {
+                tokenType = SqlToySqlTokenTypes.TABLE_ALIAS;
+            } else if (expectingAlias && !keyword) {
                 tokenType = SqlToySqlTokenTypes.ALIAS;
+            } else if (expectingTableName) {
+                tokenType = SqlToySqlTokenTypes.TABLE;
+            } else if (!keyword && isQualifierBeforeDot(tokenEnd)) {
+                tokenType = SqlToySqlTokenTypes.TABLE_ALIAS;
             } else if (isFunctionName(identifier, tokenEnd)) {
                 tokenType = SqlToySqlTokenTypes.FUNCTION;
             } else if (keyword) {
                 tokenType = SqlToySqlTokenTypes.KEYWORD;
-            } else if (expectingTableName) {
-                tokenType = SqlToySqlTokenTypes.TABLE;
             } else {
                 tokenType = SqlToySqlTokenTypes.IDENTIFIER;
             }
@@ -389,8 +401,9 @@ final class SqlToySqlLexer extends LexerBase {
             String keyword = getTokenText(tokenStart, tokenEnd);
             // AS introduces either a select alias or a table alias, depending on context.
             if ("AS".equals(keyword)) {
-                expectingAlias = true;
-                expectingTableAlias = false;
+                boolean tableAliasContext = expectingTableAlias || justReadTableName;
+                expectingAlias = !tableAliasContext;
+                expectingTableAlias = tableAliasContext;
                 expectingParameterName = false;
                 expectingTableName = false;
                 justReadTableName = false;
@@ -428,6 +441,15 @@ final class SqlToySqlLexer extends LexerBase {
             return;
         }
 
+        if (tokenType == SqlToySqlTokenTypes.TABLE_ALIAS) {
+            expectingAlias = false;
+            expectingTableAlias = false;
+            expectingParameterName = false;
+            expectingTableName = false;
+            justReadTableName = false;
+            return;
+        }
+
         if (tokenType == SqlToySqlTokenTypes.ALIAS) {
             expectingAlias = false;
             expectingTableAlias = false;
@@ -446,6 +468,11 @@ final class SqlToySqlLexer extends LexerBase {
             return;
         }
 
+        if (isBracketToken(tokenType)) {
+            updateContextAfterBracket();
+            return;
+        }
+
         if (tokenType == SqlToySqlTokenTypes.PUNCTUATION) {
             updateContextAfterPunctuation();
             return;
@@ -458,6 +485,63 @@ final class SqlToySqlLexer extends LexerBase {
             justReadTableName = false;
             expectingTableName = false;
         }
+    }
+
+    /**
+     * Updates lexer context after bracket tokens.
+     */
+    private void updateContextAfterBracket() {
+        char bracket = buffer.charAt(tokenStart);
+
+        if (bracket == '(') {
+            parenthesisDepth++;
+
+            if (expectingTableName) {
+                derivedTableParenthesisDepths.push(parenthesisDepth);
+                tableContextStates.push(new TableContextState(tableContextActive));
+                expectingAlias = false;
+                expectingTableAlias = false;
+                expectingParameterName = false;
+                expectingTableName = false;
+                tableContextActive = false;
+                justReadTableName = false;
+                return;
+            }
+
+            expectingParameterName = false;
+            justReadTableName = false;
+            return;
+        }
+
+        if (bracket == ')') {
+            boolean closesDerivedTable = parenthesisDepth > 0
+                    && !derivedTableParenthesisDepths.isEmpty()
+                    && derivedTableParenthesisDepths.peek() == parenthesisDepth;
+
+            if (closesDerivedTable) {
+                derivedTableParenthesisDepths.pop();
+                TableContextState previousState = tableContextStates.isEmpty()
+                        ? new TableContextState(false)
+                        : tableContextStates.pop();
+                expectingAlias = false;
+                expectingTableAlias = true;
+                expectingParameterName = false;
+                expectingTableName = false;
+                tableContextActive = previousState.tableContextActive();
+                justReadTableName = true;
+            } else {
+                expectingParameterName = false;
+                justReadTableName = false;
+            }
+
+            if (parenthesisDepth > 0) {
+                parenthesisDepth--;
+            }
+            return;
+        }
+
+        expectingParameterName = false;
+        justReadTableName = false;
     }
 
     /**
@@ -515,6 +599,17 @@ final class SqlToySqlLexer extends LexerBase {
 
         int next = skipWhitespace(identifierEnd);
         return next < endOffset && buffer.charAt(next) == '(';
+    }
+
+    /**
+     * Checks whether an identifier is the qualifier in a qualified column reference.
+     *
+     * @param identifierEnd identifier end offset
+     * @return true when the identifier is followed by a dot
+     */
+    private boolean isQualifierBeforeDot(int identifierEnd) {
+        int next = skipWhitespace(identifierEnd);
+        return next < endOffset && buffer.charAt(next) == '.';
     }
 
     /**
@@ -591,7 +686,22 @@ final class SqlToySqlLexer extends LexerBase {
      * @return true when the character is punctuation
      */
     private static boolean isPunctuation(char c) {
-        return ".,;:".indexOf(c) >= 0;
+        return ".,;:#".indexOf(c) >= 0;
+    }
+
+    /**
+     * Checks whether a token type represents any bracket token.
+     *
+     * @param tokenType token type to check
+     * @return true when token type is a bracket
+     */
+    private static boolean isBracketToken(@NotNull IElementType tokenType) {
+        return tokenType == SqlToySqlTokenTypes.LPAREN
+                || tokenType == SqlToySqlTokenTypes.RPAREN
+                || tokenType == SqlToySqlTokenTypes.LBRACKET
+                || tokenType == SqlToySqlTokenTypes.RBRACKET
+                || tokenType == SqlToySqlTokenTypes.LBRACE
+                || tokenType == SqlToySqlTokenTypes.RBRACE;
     }
 
     /**
@@ -610,5 +720,13 @@ final class SqlToySqlLexer extends LexerBase {
             case '}' -> SqlToySqlTokenTypes.RBRACE;
             default -> null;
         };
+    }
+
+    /**
+     * Table scanning state outside a derived-table parenthesis.
+     *
+     * @param tableContextActive whether commas still introduce more table names
+     */
+    private record TableContextState(boolean tableContextActive) {
     }
 }

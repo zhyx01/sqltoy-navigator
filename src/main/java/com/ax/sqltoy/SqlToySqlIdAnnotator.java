@@ -24,8 +24,8 @@ public final class SqlToySqlIdAnnotator implements Annotator {
      * Green underline color used for resolvable sqlId literals.
      */
     private static final Color UNDERLINE_COLOR = new JBColor(
-            new Color(46, 160, 67),
-            new Color(46, 160, 67)
+            new Color(104, 168, 113),
+            new Color(104, 168, 113)
     );
 
     /**
