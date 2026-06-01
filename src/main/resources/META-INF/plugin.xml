@@ -33,6 +33,8 @@
         <annotator
                 language="XML"
                 implementationClass="com.ax.sqltoy.SqlToyXmlSqlAnnotator"/>
+        <editorFactoryListener
+                implementation="com.ax.sqltoy.SqlToySqlWordOccurrenceHighlighter"/>
         <codeInsight.lineMarkerProvider
                 language="JAVA"
                 implementationClass="com.ax.sqltoy.SqlToySqlIdLineMarkerProvider"/>

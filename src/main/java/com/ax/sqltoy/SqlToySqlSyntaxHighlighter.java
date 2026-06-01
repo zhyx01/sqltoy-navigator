@@ -113,8 +113,11 @@ public final class SqlToySqlSyntaxHighlighter extends SyntaxHighlighterBase {
         if (tokenType == SqlToySqlTokenTypes.TABLE) {
             return TABLE_KEYS;
         }
+        if (tokenType == SqlToySqlTokenTypes.TABLE_ALIAS) {
+            return TABLE_KEYS;
+        }
         if (tokenType == SqlToySqlTokenTypes.ALIAS) {
-            return ALIAS_KEYS;
+            return TABLE_KEYS;
         }
         if (tokenType == SqlToySqlTokenTypes.PARAMETER) {
             return PARAMETER_KEYS;
