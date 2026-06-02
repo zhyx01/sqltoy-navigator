@@ -21,7 +21,7 @@ intellijPlatform {
 
         changeNotes = """
             Initial version: navigate Java SqlToy sqlId string literals to XML &lt;sql id="..."&gt; definitions
-            and highlight SQL syntax inside SqlToy XML SQL tags with a bundled lightweight SQL highlighter.
+            and inject IDEA SQL support inside SqlToy XML SQL tags when available.
         """.trimIndent()
     }
 }

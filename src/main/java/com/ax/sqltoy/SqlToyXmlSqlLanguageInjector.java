@@ -1,5 +1,6 @@
 package com.ax.sqltoy;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Injects the lightweight SqlToy SQL language into XML SQL tag text.
+ * Injects IDEA's SQL language into XML SQL tag text when the Database Tools plugin is available.
  *
  * @author ax
  * @date 2026-05-30
@@ -48,9 +49,19 @@ public final class SqlToyXmlSqlLanguageInjector implements MultiHostInjector {
         }
 
         // Inject only the actual SQL body, excluding CDATA wrappers and surrounding whitespace.
-        registrar.startInjecting(SqlToySqlLanguage.INSTANCE)
+        registrar.startInjecting(getInjectedSqlLanguage())
                 .addPlace(null, null, host, textRange)
                 .doneInjecting();
+    }
+
+    /**
+     * Uses IDEA's SQL language when it is loaded, otherwise falls back to the plugin's lightweight SQL language.
+     *
+     * @return language used for XML SQL injection
+     */
+    private static @NotNull Language getInjectedSqlLanguage() {
+        Language ideaSqlLanguage = Language.findLanguageByID("SQL");
+        return ideaSqlLanguage == null ? SqlToySqlLanguage.INSTANCE : ideaSqlLanguage;
     }
 
     /**
