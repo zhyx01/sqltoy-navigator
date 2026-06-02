@@ -20,7 +20,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,11 +51,6 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
      * Keep these highlights below the real editor selection layer.
      */
     private static final int HIGHLIGHT_LAYER = HighlighterLayer.SELECTION - 1;
-
-    /**
-     * Fallback occurrence attributes used when the current color scheme has no identifier attributes.
-     */
-    private static final TextAttributes FALLBACK_ATTRIBUTES = createFallbackAttributes();
 
     /**
      * Per-editor listeners and highlighters.
@@ -382,7 +376,7 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
         TextAttributes attributes = editor.getColorsScheme().getAttributes(
                 EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES
         );
-        return attributes == null ? FALLBACK_ATTRIBUTES : attributes;
+        return attributes == null ? createFallbackAttributes() : attributes;
     }
 
     /**
@@ -392,7 +386,7 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
      */
     private static @NotNull TextAttributes createFallbackAttributes() {
         TextAttributes attributes = new TextAttributes();
-        attributes.setBackgroundColor(new JBColor(new Color(255, 236, 150), new Color(80, 73, 36)));
+        attributes.setBackgroundColor(new Color(255, 236, 150));
         return attributes;
     }
 

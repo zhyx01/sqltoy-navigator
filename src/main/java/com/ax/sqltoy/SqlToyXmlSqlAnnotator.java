@@ -29,26 +29,10 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
      */
     private static final SqlToySqlSyntaxHighlighter HIGHLIGHTER = new SqlToySqlSyntaxHighlighter();
 
-    /**
-     * Forced function color because theme function colors may not be visibly blue.
-     */
-    private static final TextAttributes FUNCTION_ATTRIBUTES = createForegroundAttributes(
-            new JBColor(new Color(0, 92, 197), new Color(86, 156, 214))
-    );
-
-    /**
-     * Forced column alias color so column aliases do not look like table names.
-     */
-    private static final TextAttributes ALIAS_ATTRIBUTES = createForegroundAttributes(
-            new JBColor(new Color(151, 84, 17), new Color(209, 154, 102))
-    );
-
-    /**
-     * Forced parameter color for SqlToy :parameterName placeholders.
-     */
-    private static final TextAttributes PARAMETER_ATTRIBUTES = createForegroundAttributes(
-            new JBColor(new Color(153, 121, 0), new Color(220, 220, 120))
-    );
+    // 函数
+    private static final Color FUNCTION_COLOR = new Color(86, 156, 214);
+    // 参数
+    private static final Color PARAMETER_COLOR = new Color(220, 220, 120);
 
     /**
      * Adds SQL token highlighting to XML text nodes inside SqlToy SQL tags.
@@ -113,13 +97,13 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
         var builder = holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(tokenRange);
         // Enforced attributes are used only for colors the plugin must keep stable across themes.
         if (tokenType == SqlToySqlTokenTypes.FUNCTION) {
-            builder.enforcedTextAttributes(FUNCTION_ATTRIBUTES);
+            builder.enforcedTextAttributes(createForegroundAttributes(FUNCTION_COLOR));
         }
         // else if (tokenType == SqlToySqlTokenTypes.ALIAS) {
         //     builder.enforcedTextAttributes(ALIAS_ATTRIBUTES);
         // }
         else if (tokenType == SqlToySqlTokenTypes.PARAMETER) {
-            builder.enforcedTextAttributes(PARAMETER_ATTRIBUTES);
+            builder.enforcedTextAttributes(createForegroundAttributes(PARAMETER_COLOR));
         } else {
             builder.textAttributes(attributes[0]);
         }

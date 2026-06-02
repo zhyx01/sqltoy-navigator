@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
@@ -20,18 +19,7 @@ import java.awt.Color;
  */
 public final class SqlToySqlIdAnnotator implements Annotator {
 
-    /**
-     * Green underline color used for resolvable sqlId literals.
-     */
-    private static final Color UNDERLINE_COLOR = new JBColor(
-            new Color(104, 168, 113),
-            new Color(104, 168, 113)
-    );
-
-    /**
-     * Cached underline attributes reused for all Java sqlId annotations.
-     */
-    private static final TextAttributes SQL_ID_UNDERLINE = createUnderlineAttributes();
+    private static final Color UNDERLINE_COLOR = new Color(104, 168, 113);
 
     /**
      * Annotates Java sqlId literals that have matching XML targets.
@@ -54,7 +42,7 @@ public final class SqlToySqlIdAnnotator implements Annotator {
 
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                 .range(SqlToyJavaSqlIdResolver.getStringContentTextRange(literalExpression))
-                .enforcedTextAttributes(SQL_ID_UNDERLINE)
+                .enforcedTextAttributes(createUnderlineAttributes())
                 .create();
     }
 
