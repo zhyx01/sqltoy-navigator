@@ -10,8 +10,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.ui.JBColor;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
@@ -33,6 +35,7 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
     private static final Color FUNCTION_COLOR = new Color(86, 156, 214);
     // 参数
     private static final Color PARAMETER_COLOR = new Color(220, 220, 120);
+    private static final Color UNUSED_SQL_ID_COLOR = new Color(128, 128, 128);
 
     /**
      * Adds SQL token highlighting to XML text nodes inside SqlToy SQL tags.
@@ -42,6 +45,8 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
      */
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+        annotateUnusedXmlSqlId(element, holder);
+
         if (!(element instanceof XmlText xmlText)) {
             return;
         }
@@ -64,6 +69,41 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
             highlightToken(xmlText, holder, lexer);
             lexer.advance();
         }
+    }
+
+    /**
+     * Grays out XML SQL ids that are not referenced from Java code.
+     *
+     * @param element XML PSI element currently being annotated
+     * @param holder annotation holder used to add text attributes
+     */
+    private void annotateUnusedXmlSqlId(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+        if (!(element instanceof XmlToken xmlToken) || xmlToken.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+            return;
+        }
+
+        if (!(xmlToken.getParent() instanceof XmlAttributeValue valueElement)) {
+            return;
+        }
+
+        var tag = SqlToySqlIdXmlResolver.getSqlTagForIdValue(valueElement);
+        if (tag == null) {
+            return;
+        }
+
+        String sqlId = SqlToySqlIdXmlResolver.getSqlId(tag);
+        if (sqlId == null || !SqlToySqlIdXmlResolver.maybeSqlId(sqlId)) {
+            return;
+        }
+
+        if (!SqlToyJavaSqlIdResolver.findLiteralTargets(element.getProject(), sqlId).isEmpty()) {
+            return;
+        }
+
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                .range(element.getTextRange())
+                .enforcedTextAttributes(createForegroundAttributes(UNUSED_SQL_ID_COLOR))
+                .create();
     }
 
     /**

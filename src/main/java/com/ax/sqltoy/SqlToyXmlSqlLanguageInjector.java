@@ -59,7 +59,7 @@ public final class SqlToyXmlSqlLanguageInjector implements MultiHostInjector {
      *
      * @return language used for XML SQL injection
      */
-    private static @NotNull Language getInjectedSqlLanguage() {
+    private @NotNull Language getInjectedSqlLanguage() {
         Language ideaSqlLanguage = Language.findLanguageByID("SQL");
         return ideaSqlLanguage == null ? SqlToySqlLanguage.INSTANCE : ideaSqlLanguage;
     }

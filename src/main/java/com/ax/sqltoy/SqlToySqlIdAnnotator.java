@@ -51,7 +51,7 @@ public final class SqlToySqlIdAnnotator implements Annotator {
      *
      * @return underline text attributes
      */
-    private static TextAttributes createUnderlineAttributes() {
+    private TextAttributes createUnderlineAttributes() {
         TextAttributes attributes = new TextAttributes();
         attributes.setEffectColor(UNDERLINE_COLOR);
         attributes.setEffectType(EffectType.LINE_UNDERSCORE);

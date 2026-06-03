@@ -45,7 +45,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
      * @param element Java PSI element
      * @param result marker collection to append to
      */
-    private static void collectJavaSqlIdMarker(
+    private void collectJavaSqlIdMarker(
             @NotNull PsiElement element,
             @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result
     ) {
@@ -83,7 +83,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
      * @param element XML PSI element
      * @param result marker collection to append to
      */
-    private static void collectXmlSqlMarker(
+    private void collectXmlSqlMarker(
             @NotNull PsiElement element,
             @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result
     ) {
@@ -107,19 +107,14 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
 
         Project project = element.getProject();
         List<PsiElement> targets = SqlToyJavaSqlIdResolver.findLiteralTargets(project, sqlId);
-        String tooltipText = "SqlToy SQL definition: " + sqlId;
-
-        // When no Java usage exists, keep the marker on the XML definition itself.
         if (targets.isEmpty()) {
-            targets = List.of(valueElement);
-        } else {
-            tooltipText = "Navigate to Java SqlToy sqlId: " + sqlId;
+            return;
         }
 
         NavigationGutterIconBuilder<PsiElement> builder = NavigationGutterIconBuilder
                 .create(SqlToyIcons.SQL_MARKER)
                 .setTargets(targets)
-                .setTooltipText(tooltipText);
+                .setTooltipText("Navigate to Java SqlToy sqlId: " + sqlId);
 
         result.add(builder.createLineMarkerInfo(element));
     }
