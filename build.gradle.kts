@@ -4,11 +4,11 @@ plugins {
 }
 
 group = "com.ax.sqltoy"
-version = "1.0.1"
+version = "1.0.2"
 
 dependencies {
     intellijPlatform {
-        intellijIdea("2025.2.6.1")
+        intellijIdea("2024.1.1")
         bundledPlugin("com.intellij.java")
     }
 }
@@ -16,7 +16,7 @@ dependencies {
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "252"
+            sinceBuild = "241.15989.150"
         }
 
         changeNotes = """
@@ -28,8 +28,8 @@ intellijPlatform {
 
 tasks {
     withType<JavaCompile> {
-        sourceCompatibility = "21"
-        targetCompatibility = "21"
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
         options.encoding = "UTF-8"
     }
 }
