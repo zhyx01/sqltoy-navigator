@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.ax.sqltoy"
-version = "1.0.2"
+version = "1.0.3"
 
 dependencies {
     intellijPlatform {

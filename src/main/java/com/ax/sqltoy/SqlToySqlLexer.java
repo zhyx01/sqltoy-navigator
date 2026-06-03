@@ -478,8 +478,26 @@ final class SqlToySqlLexer extends LexerBase {
             return;
         }
 
-        if (tokenType == SqlToySqlTokenTypes.IDENTIFIER || tokenType == SqlToySqlTokenTypes.FUNCTION) {
+        if (tokenType == SqlToySqlTokenTypes.OPERATOR) {
             expectingAlias = false;
+            expectingTableAlias = false;
+            expectingParameterName = false;
+            justReadTableName = false;
+            expectingTableName = false;
+            return;
+        }
+
+        if (tokenType == SqlToySqlTokenTypes.IDENTIFIER || tokenType == SqlToySqlTokenTypes.FUNCTION) {
+            expectingTableAlias = false;
+            expectingParameterName = false;
+            justReadTableName = false;
+            expectingTableName = false;
+            expectingAlias = tokenType == SqlToySqlTokenTypes.IDENTIFIER;
+            return;
+        }
+
+        if (tokenType == SqlToySqlTokenTypes.STRING || tokenType == SqlToySqlTokenTypes.NUMBER) {
+            expectingAlias = true;
             expectingTableAlias = false;
             expectingParameterName = false;
             justReadTableName = false;
@@ -530,6 +548,7 @@ final class SqlToySqlLexer extends LexerBase {
                 tableContextActive = previousState.tableContextActive();
                 justReadTableName = true;
             } else {
+                expectingAlias = true;
                 expectingParameterName = false;
                 justReadTableName = false;
             }
@@ -579,6 +598,7 @@ final class SqlToySqlLexer extends LexerBase {
         }
 
         if (punctuation != '.') {
+            expectingAlias = false;
             expectingTableAlias = false;
             expectingParameterName = false;
             justReadTableName = false;

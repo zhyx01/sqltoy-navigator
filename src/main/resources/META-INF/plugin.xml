@@ -41,7 +41,5 @@
         <codeInsight.lineMarkerProvider
                 language="XML"
                 implementationClass="com.ax.sqltoy.SqlToySqlIdLineMarkerProvider"/>
-        <multiHostInjector
-                implementation="com.ax.sqltoy.SqlToyXmlSqlLanguageInjector"/>
     </extensions>
 </idea-plugin>

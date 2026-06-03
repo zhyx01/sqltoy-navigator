@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Color;
 
 /**
- * Directly highlights SQL text inside SqlToy XML tags.
+ * Adds XML-side annotations for SqlToy SQL definitions.
  *
  * @author ax
  * @date 2026-05-30
@@ -31,9 +32,7 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
      */
     private static final SqlToySqlSyntaxHighlighter HIGHLIGHTER = new SqlToySqlSyntaxHighlighter();
 
-    // 函数
     private static final Color FUNCTION_COLOR = new Color(86, 156, 214);
-    // 参数
     private static final Color PARAMETER_COLOR = new Color(220, 220, 120);
     private static final Color UNUSED_SQL_ID_COLOR = new Color(128, 128, 128);
 
@@ -61,7 +60,6 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
             return;
         }
 
-        // Run the same lexer as the injected language highlighter for consistent token classes.
         Lexer lexer = HIGHLIGHTER.getHighlightingLexer();
         lexer.start(text, sqlTextRange.getStartOffset(), sqlTextRange.getEndOffset(), 0);
 
@@ -96,6 +94,10 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
             return;
         }
 
+        if (DumbService.isDumb(element.getProject())) {
+            return;
+        }
+
         if (!SqlToyJavaSqlIdResolver.findLiteralTargets(element.getProject(), sqlId).isEmpty()) {
             return;
         }
@@ -123,26 +125,19 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
             return;
         }
 
-        // Empty attributes mean the plugin intentionally leaves the token uncolored.
         TextAttributesKey[] attributes = HIGHLIGHTER.getTokenHighlights(tokenType);
         if (attributes.length == 0) {
             return;
         }
 
-        // Convert token offsets from XML-text-relative to file-level offsets.
         TextRange tokenRange = TextRange
                 .create(lexer.getTokenStart(), lexer.getTokenEnd())
                 .shiftRight(xmlText.getTextRange().getStartOffset());
 
         var builder = holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(tokenRange);
-        // Enforced attributes are used only for colors the plugin must keep stable across themes.
         if (tokenType == SqlToySqlTokenTypes.FUNCTION) {
             builder.enforcedTextAttributes(createForegroundAttributes(FUNCTION_COLOR));
-        }
-        // else if (tokenType == SqlToySqlTokenTypes.ALIAS) {
-        //     builder.enforcedTextAttributes(ALIAS_ATTRIBUTES);
-        // }
-        else if (tokenType == SqlToySqlTokenTypes.PARAMETER) {
+        } else if (tokenType == SqlToySqlTokenTypes.PARAMETER) {
             builder.enforcedTextAttributes(createForegroundAttributes(PARAMETER_COLOR));
         } else {
             builder.textAttributes(attributes[0]);

@@ -1,13 +1,19 @@
 package com.ax.sqltoy;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -16,7 +22,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -34,6 +43,17 @@ final class SqlToySqlIdXmlResolver {
      * a-b/c:test
      */
     private static final Pattern SQL_ID_PATTERN = Pattern.compile("[A-Za-z0-9_.$:/\\-]+");
+
+    /**
+     * Word-index friendly fragments inside a SqlToy sqlId.
+     */
+    private static final Pattern INDEXABLE_WORD_PATTERN = Pattern.compile("[A-Za-z0-9_]+");
+
+    /**
+     * Cached XML definitions grouped by sqlId for one XML file.
+     */
+    private static final Key<CachedValue<Map<String, List<SqlIdTarget>>>> XML_TARGETS_CACHE =
+            Key.create("SqlToyXmlTargetsCache");
 
     /**
      * Utility class; instances are not needed.
@@ -67,16 +87,16 @@ final class SqlToySqlIdXmlResolver {
      * @return matching XML targets
      */
     static List<SqlIdTarget> findTargets(@NotNull Project project, @NotNull String sqlId) {
-        List<SqlIdTarget> matched = new ArrayList<>();
-
-        // Reuse the full scan so duplicate sqlId definitions are preserved.
-        for (SqlIdTarget target : findAllTargets(project)) {
-            if (sqlId.equals(target.sqlId())) {
-                matched.add(target);
-            }
+        if (DumbService.isDumb(project)) {
+            return List.of();
         }
 
-        return matched;
+        List<SqlIdTarget> result = new ArrayList<>();
+        for (XmlFile xmlFile : findCandidateXmlFiles(project, sqlId)) {
+            result.addAll(getTargetsById(xmlFile, xmlFile.getName()).getOrDefault(sqlId, List.of()));
+        }
+
+        return result;
     }
 
     /**
@@ -88,7 +108,60 @@ final class SqlToySqlIdXmlResolver {
     static List<SqlIdTarget> findAllTargets(@NotNull Project project) {
         List<SqlIdTarget> result = new ArrayList<>();
 
-        // FileTypeIndex avoids scanning non-XML files.
+        GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+        Collection<VirtualFile> xmlFiles = FileTypeIndex.getFiles(XmlFileType.INSTANCE, scope);
+        PsiManager psiManager = PsiManager.getInstance(project);
+
+        for (VirtualFile virtualFile : xmlFiles) {
+            PsiFile psiFile = psiManager.findFile(virtualFile);
+            if (!(psiFile instanceof XmlFile xmlFile)) {
+                continue;
+            }
+
+            getTargetsById(xmlFile, virtualFile.getName()).values().forEach(result::addAll);
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns XML files that contain an indexable fragment of the sqlId.
+     *
+     * @param project current project
+     * @param sqlId sqlId to find
+     * @return candidate XML PSI files
+     */
+    private static List<XmlFile> findCandidateXmlFiles(@NotNull Project project, @NotNull String sqlId) {
+        String searchWord = getIndexSearchWord(sqlId);
+        if (searchWord == null) {
+            return findAllXmlFiles(project);
+        }
+
+        List<XmlFile> result = new ArrayList<>();
+        GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+        PsiSearchHelper.getInstance(project).processAllFilesWithWordInText(
+                searchWord,
+                scope,
+                file -> {
+                    if (file instanceof XmlFile xmlFile) {
+                        result.add(xmlFile);
+                    }
+                    return true;
+                },
+                true
+        );
+
+        return result;
+    }
+
+    /**
+     * Returns all XML files in project scope.
+     *
+     * @param project current project
+     * @return XML PSI files
+     */
+    private static List<XmlFile> findAllXmlFiles(@NotNull Project project) {
+        List<XmlFile> result = new ArrayList<>();
         GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
         Collection<VirtualFile> xmlFiles = FileTypeIndex.getFiles(XmlFileType.INSTANCE, scope);
         PsiManager psiManager = PsiManager.getInstance(project);
@@ -100,15 +173,75 @@ final class SqlToySqlIdXmlResolver {
                 continue;
             }
 
-            XmlTag rootTag = xmlFile.getRootTag();
-            if (rootTag == null) {
-                continue;
-            }
-
-            collectSqlIds(rootTag, virtualFile.getName(), result);
+            result.add(xmlFile);
         }
 
         return result;
+    }
+
+    /**
+     * Returns cached XML definitions grouped by sqlId for one XML file.
+     *
+     * @param xmlFile XML file to inspect
+     * @param fileName source XML file name
+     * @return sqlId to XML target map
+     */
+    private static Map<String, List<SqlIdTarget>> getTargetsById(
+            @NotNull XmlFile xmlFile,
+            @NotNull String fileName
+    ) {
+        return CachedValuesManager.getManager(xmlFile.getProject()).getCachedValue(
+                xmlFile,
+                XML_TARGETS_CACHE,
+                () -> CachedValueProvider.Result.create(collectTargetsById(xmlFile, fileName), xmlFile),
+                false
+        );
+    }
+
+    /**
+     * Finds every SqlToy SQL definition in one XML file and groups them by sqlId.
+     *
+     * @param xmlFile XML file to inspect
+     * @param fileName source XML file name
+     * @return sqlId to XML target map
+     */
+    private static Map<String, List<SqlIdTarget>> collectTargetsById(
+            @NotNull XmlFile xmlFile,
+            @NotNull String fileName
+    ) {
+        List<SqlIdTarget> result = new ArrayList<>();
+        XmlTag rootTag = xmlFile.getRootTag();
+        if (rootTag == null) {
+            return Map.of();
+        }
+
+        collectSqlIds(rootTag, fileName, result);
+
+        Map<String, List<SqlIdTarget>> targetsById = new HashMap<>();
+        for (SqlIdTarget target : result) {
+            targetsById.computeIfAbsent(target.sqlId(), ignored -> new ArrayList<>()).add(target);
+        }
+
+        return targetsById;
+    }
+
+    /**
+     * Chooses the longest word-indexable fragment of a sqlId.
+     *
+     * @param sqlId sqlId to search
+     * @return indexable word, or null when no word fragment exists
+     */
+    static String getIndexSearchWord(@NotNull String sqlId) {
+        String bestWord = null;
+        Matcher matcher = INDEXABLE_WORD_PATTERN.matcher(sqlId);
+        while (matcher.find()) {
+            String word = matcher.group();
+            if (bestWord == null || word.length() > bestWord.length()) {
+                bestWord = word;
+            }
+        }
+
+        return bestWord;
     }
 
     /**
