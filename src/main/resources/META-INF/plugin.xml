@@ -3,11 +3,13 @@
     <name>SqlToy Navigator</name>
     <vendor email="zhouyx.ax@gmail.com">ax</vendor>
 
-    <description><![CDATA[
-        Provides navigation from Java SqlToy sqlId string literals to SqlToy XML SQL definitions,
-        and highlights SQL syntax inside SqlToy XML SQL tags.
-        Example: "view_user_list" -> <sql id="view_user_list">...</sql>
-    ]]></description>
+    <description>
+        SqlToy Navigator 是一款面向 SqlToy ORM 项目的 IntelliJ IDEA 插件，帮助开发者在 Java 代码中的 sqlId 字符串 与 XML 文件中的 SQL 定义 之间快速跳转。
+
+        在使用 SqlToy 开发时，SQL 通常定义在 XML 文件中，而 Java 代码中只通过字符串形式引用对应的 sqlId。当项目规模变大后，开发者经常需要在 Java 类、XML 文件和搜索结果之间反复切换，不仅效率低，也容易定位错误。
+
+        SqlToy Navigator 的目标就是减少这种重复查找，让 sqlId 定位变得更直观、更快速。
+    </description>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
