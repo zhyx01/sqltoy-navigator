@@ -4,11 +4,11 @@ plugins {
 }
 
 group = "com.ax.sqltoy"
-version = "1.0.0"
+version = "1.0.4"
 
 dependencies {
     intellijPlatform {
-        intellijIdea("2025.2.6.1")
+        intellijIdea("2024.1.1")
         bundledPlugin("com.intellij.java")
     }
 }
@@ -16,20 +16,20 @@ dependencies {
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "252"
+            sinceBuild = "241.15989.150"
         }
 
         changeNotes = """
             Initial version: navigate Java SqlToy sqlId string literals to XML &lt;sql id="..."&gt; definitions
-            and highlight SQL syntax inside SqlToy XML SQL tags with a bundled lightweight SQL highlighter.
+            and inject IDEA SQL support inside SqlToy XML SQL tags when available.
         """.trimIndent()
     }
 }
 
 tasks {
     withType<JavaCompile> {
-        sourceCompatibility = "21"
-        targetCompatibility = "21"
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
         options.encoding = "UTF-8"
     }
 }

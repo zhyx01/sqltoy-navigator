@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Factory that supplies syntax highlighters for SqlToy SQL fragments.
+ * 为 SqlToy SQL 片段提供语法高亮器的工厂。
  *
  * @author ax
  * @date 2026-05-30
@@ -16,11 +16,11 @@ import org.jetbrains.annotations.Nullable;
 public final class SqlToySqlSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
 
     /**
-     * Creates a syntax highlighter for an editor context.
+     * 为编辑器上下文创建语法高亮器。
      *
-     * @param project current project, if available
-     * @param virtualFile current virtual file, if available
-     * @return new SqlToy SQL syntax highlighter
+     * @param project 当前项目，可能为空
+     * @param virtualFile 当前虚拟文件，可能为空
+     * @return 新的 SqlToy SQL 语法高亮器
      */
     @Override
     public @NotNull SyntaxHighlighter getSyntaxHighlighter(

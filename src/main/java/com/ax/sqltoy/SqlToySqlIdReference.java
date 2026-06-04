@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Reference from a Java sqlId string literal to matching SqlToy XML SQL definitions.
+ * 从 Java sqlId 字符串字面量指向匹配 SqlToy XML SQL 定义的引用。
  *
  * @author ax
  * @date 2026-05-30
@@ -18,15 +18,15 @@ import java.util.List;
 public final class SqlToySqlIdReference extends PsiPolyVariantReferenceBase<PsiLiteralExpression> {
 
     /**
-     * sqlId value represented by this Java literal reference.
+     * 此 Java 字面量引用表示的 sqlId 值。
      */
     private final String sqlId;
 
     /**
-     * Creates a reference for one Java string literal.
+     * 为一个 Java 字符串字面量创建引用。
      *
-     * @param element Java string literal expression
-     * @param sqlId sqlId value extracted from the literal
+     * @param element Java 字符串字面量表达式
+     * @param sqlId 从字面量中提取的 sqlId 值
      */
     public SqlToySqlIdReference(@NotNull PsiLiteralExpression element, @NotNull String sqlId) {
         super(element, SqlToyJavaSqlIdResolver.getStringContentRange(element), true);
@@ -34,30 +34,32 @@ public final class SqlToySqlIdReference extends PsiPolyVariantReferenceBase<PsiL
     }
 
     /**
-     * If duplicate sqlId definitions exist, IDEA will show a target chooser.
+     * 如果存在重复的 sqlId 定义，IDEA 会显示目标选择器。
      *
-     * @param incompleteCode true when resolving during incomplete code editing
-     * @return all matching XML definition targets
+     * @param incompleteCode 在未完成代码编辑过程中解析时为 true
+     * @return 所有匹配的 XML 定义目标
      */
     @Override
     public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+        // 解析时保持多目标结果，允许同名 XML 定义由 IDEA 弹窗让用户选择。
         List<SqlToySqlIdXmlResolver.SqlIdTarget> targets =
                 SqlToySqlIdXmlResolver.findTargets(getElement().getProject(), sqlId);
 
         return targets.stream()
-                // Wrap every XML target as an IntelliJ resolve result.
+                // 将每个 XML 目标包装成 IntelliJ 解析结果。
                 .map(target -> new PsiElementResolveResult(target.element()))
                 .toArray(ResolveResult[]::new);
     }
 
     /**
-     * Basic completion variants.
-     * When editing a string literal, IDEA may suggest existing sqlId values.
+     * 基础补全候选。
+     * 编辑字符串字面量时，IDEA 可以提示已有的 sqlId 值。
      *
-     * @return sqlId lookup variants from XML definitions
+     * @return 来自 XML 定义的 sqlId 补全候选
      */
     @Override
     public Object @NotNull [] getVariants() {
+        // 补全直接复用项目内 XML sqlId 定义，并在右侧显示来源文件名。
         return SqlToySqlIdXmlResolver.findAllTargets(getElement().getProject())
                 .stream()
                 .map(target -> LookupElementBuilder

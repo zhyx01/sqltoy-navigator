@@ -16,7 +16,7 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Minimal parser definition for embedded SqlToy SQL fragments.
+ * 嵌入式 SqlToy SQL 片段的最小解析器定义。
  *
  * @author ax
  * @date 2026-05-30
@@ -24,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
 public final class SqlToySqlParserDefinition implements ParserDefinition {
 
     /**
-     * File element type used as the root for injected SQL fragments.
+     * 作为注入 SQL 片段根节点的文件元素类型。
      */
     private static final IFileElementType FILE = new IFileElementType(SqlToySqlLanguage.INSTANCE);
 
     /**
-     * Comment token set exposed to IntelliJ language services.
+     * 暴露给 IntelliJ 语言服务的注释词法单元集合。
      */
     private static final TokenSet COMMENTS = TokenSet.create(
             SqlToySqlTokenTypes.LINE_COMMENT,
@@ -37,15 +37,15 @@ public final class SqlToySqlParserDefinition implements ParserDefinition {
     );
 
     /**
-     * String token set exposed to IntelliJ language services.
+     * 暴露给 IntelliJ 语言服务的字符串词法单元集合。
      */
     private static final TokenSet STRINGS = TokenSet.create(SqlToySqlTokenTypes.STRING);
 
     /**
-     * Creates the lexer used by the parser.
+     * 创建解析器使用的词法分析器。
      *
-     * @param project current project
-     * @return new SqlToy SQL lexer
+     * @param project 当前项目
+     * @return 新的 SqlToy SQL 词法分析器
      */
     @Override
     public @NotNull Lexer createLexer(Project project) {
@@ -53,15 +53,15 @@ public final class SqlToySqlParserDefinition implements ParserDefinition {
     }
 
     /**
-     * Creates a permissive parser that consumes all tokens into one file node.
+     * 创建宽松解析器，将所有词法单元消费到同一个文件节点中。
      *
-     * @param project current project
-     * @return lightweight parser
+     * @param project 当前项目
+     * @return 轻量级解析器
      */
     @Override
     public @NotNull PsiParser createParser(Project project) {
         return (root, builder) -> {
-            // This plugin highlights SQL but does not build a full SQL AST.
+            // 此插件只做 SQL 高亮，不构建完整 SQL AST。
             PsiBuilder.Marker rootMarker = builder.mark();
             while (!builder.eof()) {
                 builder.advanceLexer();
@@ -72,9 +72,9 @@ public final class SqlToySqlParserDefinition implements ParserDefinition {
     }
 
     /**
-     * Returns the root file element type.
+     * 返回根文件元素类型。
      *
-     * @return file node type
+     * @return 文件节点类型
      */
     @Override
     public @NotNull IFileElementType getFileNodeType() {
@@ -82,9 +82,9 @@ public final class SqlToySqlParserDefinition implements ParserDefinition {
     }
 
     /**
-     * Returns whitespace token types.
+     * 返回空白字符词法单元类型。
      *
-     * @return whitespace token set
+     * @return 空白字符词法单元集合
      */
     @Override
     public @NotNull TokenSet getWhitespaceTokens() {
@@ -92,9 +92,9 @@ public final class SqlToySqlParserDefinition implements ParserDefinition {
     }
 
     /**
-     * Returns comment token types.
+     * 返回注释词法单元类型。
      *
-     * @return comment token set
+     * @return 注释词法单元集合
      */
     @Override
     public @NotNull TokenSet getCommentTokens() {
@@ -102,9 +102,9 @@ public final class SqlToySqlParserDefinition implements ParserDefinition {
     }
 
     /**
-     * Returns string literal token types.
+     * 返回字符串字面量词法单元类型。
      *
-     * @return string token set
+     * @return 字符串词法单元集合
      */
     @Override
     public @NotNull TokenSet getStringLiteralElements() {
@@ -112,10 +112,10 @@ public final class SqlToySqlParserDefinition implements ParserDefinition {
     }
 
     /**
-     * Wraps AST nodes in generic PSI elements.
+     * 将 AST 节点包装成通用 PSI 元素。
      *
-     * @param node AST node to wrap
-     * @return PSI wrapper element
+     * @param node 要包装的 AST 节点
+     * @return PSI 包装元素
      */
     @Override
     public @NotNull PsiElement createElement(ASTNode node) {
@@ -123,10 +123,10 @@ public final class SqlToySqlParserDefinition implements ParserDefinition {
     }
 
     /**
-     * Creates a PSI file for an injected SQL fragment.
+     * 为注入的 SQL 片段创建 PSI 文件。
      *
-     * @param viewProvider file view provider
-     * @return SqlToy SQL PSI file
+     * @param viewProvider 文件视图提供器
+     * @return SqlToy SQL PSI 文件
      */
     @Override
     public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
@@ -134,11 +134,11 @@ public final class SqlToySqlParserDefinition implements ParserDefinition {
     }
 
     /**
-     * Defines spacing requirements between tokens.
+     * 定义词法单元之间的空格要求。
      *
-     * @param left left AST node
-     * @param right right AST node
-     * @return permissive spacing rule
+     * @param left 左侧 AST 节点
+     * @param right 右侧 AST 节点
+     * @return 宽松的空格规则
      */
     @Override
     public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {

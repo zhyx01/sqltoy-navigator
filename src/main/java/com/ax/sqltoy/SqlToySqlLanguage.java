@@ -4,7 +4,7 @@ import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Defines the lightweight embedded SQL language used inside SqlToy XML tags.
+ * 定义用于 SqlToy XML 标签内的轻量级嵌入式 SQL 语言。
  *
  * @author ax
  * @date 2026-05-30
@@ -12,21 +12,21 @@ import org.jetbrains.annotations.NotNull;
 public final class SqlToySqlLanguage extends Language {
 
     /**
-     * Singleton language instance registered in plugin.xml.
+     * 在 plugin.xml 中注册的语言单例。
      */
     public static final SqlToySqlLanguage INSTANCE = new SqlToySqlLanguage();
 
     /**
-     * Creates the language with a stable ID used by IntelliJ extension points.
+     * 使用 IntelliJ 扩展点所需的稳定 ID 创建语言。
      */
     private SqlToySqlLanguage() {
         super("SqlToySQL");
     }
 
     /**
-     * Returns the human-readable language name shown by IntelliJ.
+     * 返回 IntelliJ 显示的人类可读语言名称。
      *
-     * @return display name for the embedded SQL language
+     * @return 嵌入式 SQL 语言的显示名称
      */
     @Override
     public @NotNull String getDisplayName() {

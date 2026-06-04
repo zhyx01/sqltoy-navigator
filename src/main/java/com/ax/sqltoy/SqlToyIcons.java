@@ -5,7 +5,7 @@ import com.intellij.openapi.util.IconLoader;
 import javax.swing.Icon;
 
 /**
- * Centralizes plugin icon loading.
+ * 集中管理插件图标加载。
  *
  * @author ax
  * @date 2026-05-30
@@ -13,12 +13,12 @@ import javax.swing.Icon;
 final class SqlToyIcons {
 
     /**
-     * Gutter icon used for SQL navigation markers and SqlToy SQL file type.
+     * 用于 SQL 导航标记和 SqlToy SQL 文件类型的边栏图标。
      */
     static final Icon SQL_MARKER = IconLoader.getIcon("/icons/sqlToyMarker.svg", SqlToyIcons.class);
 
     /**
-     * Utility class; instances are not needed.
+     * 工具类，不需要创建实例。
      */
     private SqlToyIcons() {
     }

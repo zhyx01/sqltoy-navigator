@@ -20,7 +20,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * Highlights whole-word occurrences of the selected text inside the current SqlToy SQL block.
+ * 在当前 SqlToy SQL 块内高亮所选文本的整词出现位置。
  *
  * @author ax
  * @date 2026-06-01
@@ -39,45 +38,50 @@ import java.util.WeakHashMap;
 public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryListener, DumbAware {
 
     /**
-     * Maximum SQL text range scanned automatically after a selection change.
+     * 选择变化后自动扫描的 SQL 文本范围上限。
      */
     private static final int MAX_SQL_LENGTH = 200_000;
 
     /**
-     * Maximum occurrence count highlighted automatically.
+     * 自动高亮的出现次数上限。
      */
     private static final int MAX_OCCURRENCES = 1_000;
 
     /**
-     * Keep these highlights below the real editor selection layer.
+     * 将这些高亮放在真实编辑器选区层下方。
      */
     private static final int HIGHLIGHT_LAYER = HighlighterLayer.SELECTION - 1;
 
     /**
-     * Fallback occurrence attributes used when the current color scheme has no identifier attributes.
-     */
-    private static final TextAttributes FALLBACK_ATTRIBUTES = createFallbackAttributes();
-
-    /**
-     * Per-editor listeners and highlighters.
+     * 按编辑器保存的监听器和高亮器。
      */
     private final Map<Editor, EditorState> editorStates = new WeakHashMap<>();
 
     /**
-     * Installs selection listeners for newly created editors.
+     * 为新创建的编辑器安装选区监听器。
      *
-     * @param event editor creation event
+     * @param event 编辑器创建事件
      */
     @Override
     public void editorCreated(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         SelectionListener selectionListener = new SelectionListener() {
+            /**
+             * 选区内容变化时刷新当前编辑器内的整词高亮。
+             *
+             * @param event 选区变化事件
+             */
             @Override
             public void selectionChanged(@NotNull SelectionEvent event) {
                 updateHighlights(editor);
             }
         };
         CaretListener caretListener = new CaretListener() {
+            /**
+             * 光标移动且没有选区时清理当前编辑器内的整词高亮。
+             *
+             * @param event 光标变化事件
+             */
             @Override
             public void caretPositionChanged(@NotNull CaretEvent event) {
                 if (!editor.getSelectionModel().hasSelection()) {
@@ -92,9 +96,9 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
     }
 
     /**
-     * Removes listeners and highlighters when an editor is released.
+     * 编辑器释放时移除监听器和高亮器。
      *
-     * @param event editor release event
+     * @param event 编辑器释放事件
      */
     @Override
     public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -110,9 +114,9 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
     }
 
     /**
-     * Recomputes occurrence highlights for the current editor selection.
+     * 根据当前编辑器选区重新计算出现位置高亮。
      *
-     * @param editor current editor
+     * @param editor 当前编辑器
      */
     private void updateHighlights(@NotNull Editor editor) {
         EditorState state = editorStates.get(editor);
@@ -120,6 +124,7 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
             return;
         }
 
+        // 选区每次变化都先清掉旧高亮，避免残留范围跟当前选区不一致。
         removeHighlights(editor, state);
         String selectedText = editor.getSelectionModel().getSelectedText();
         if (!isHighlightableWord(selectedText)) {
@@ -130,10 +135,12 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
         int selectionEnd = editor.getSelectionModel().getSelectionEnd();
         TextRange sqlRange = findCurrentSqlRange(editor, selectionStart, selectionEnd);
         if (sqlRange == null || !containsRange(sqlRange, selectionStart, selectionEnd)) {
+            // 只在同一个 SqlToy SQL 片段内部高亮，跨出 SQL 范围的选区直接忽略。
             return;
         }
 
         if (sqlRange.getLength() > MAX_SQL_LENGTH) {
+            // 大 SQL 片段上限用于保护编辑器，不让选区变化触发过重扫描。
             return;
         }
 
@@ -143,11 +150,13 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
                 selectedText
         );
         if (occurrences.size() > MAX_OCCURRENCES) {
+            // 出现次数过多时不画高亮，避免创建大量 RangeHighlighter。
             return;
         }
 
         TextAttributes attributes = getOccurrenceAttributes(editor);
         for (TextRange occurrence : occurrences) {
+            // 使用精确范围高亮，避免整行或额外文本被渲染。
             RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(
                     occurrence.getStartOffset(),
                     occurrence.getEndOffset(),
@@ -160,9 +169,9 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
     }
 
     /**
-     * Clears occurrence highlights for an editor.
+     * 清理编辑器中的出现位置高亮。
      *
-     * @param editor current editor
+     * @param editor 当前编辑器
      */
     private void clearHighlights(@NotNull Editor editor) {
         EditorState state = editorStates.get(editor);
@@ -172,10 +181,10 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
     }
 
     /**
-     * Removes all stored range highlighters from an editor.
+     * 从编辑器中移除所有已保存的范围高亮器。
      *
-     * @param editor current editor
-     * @param state editor state
+     * @param editor 当前编辑器
+     * @param state 编辑器状态
      */
     private static void removeHighlights(@NotNull Editor editor, @NotNull EditorState state) {
         for (RangeHighlighter highlighter : state.highlighters()) {
@@ -185,12 +194,12 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
     }
 
     /**
-     * Finds the current SqlToy SQL range for the selection.
+     * 查找选区所在的当前 SqlToy SQL 范围。
      *
-     * @param editor current editor
-     * @param selectionStart selection start offset
-     * @param selectionEnd selection end offset
-     * @return SQL text range in editor offsets, or null outside SqlToy SQL
+     * @param editor 当前编辑器
+     * @param selectionStart 选区起始偏移量
+     * @param selectionEnd 选区结束偏移量
+     * @return 编辑器偏移量中的 SQL 文本范围；不在 SqlToy SQL 中时返回 null
      */
     private static @Nullable TextRange findCurrentSqlRange(
             @NotNull Editor editor,
@@ -209,11 +218,13 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
         }
 
         if (psiFile instanceof SqlToySqlFile) {
+            // 已经处在注入后的 SqlToy SQL 虚拟文件中时，整个文档都是 SQL 范围。
             return TextRange.create(0, document.getTextLength());
         }
 
         XmlText xmlText = findXmlTextAt(psiFile, selectionStart);
         if (xmlText == null && selectionEnd > selectionStart) {
+            // 选区结束偏移量是开区间，用 end - 1 才能落到实际选中文本上。
             xmlText = findXmlTextAt(psiFile, selectionEnd - 1);
         }
 
@@ -226,15 +237,16 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
             return null;
         }
 
+        // XML 文本内的相对范围需要平移到编辑器文档坐标。
         return sqlTextRange.shiftRight(xmlText.getTextRange().getStartOffset());
     }
 
     /**
-     * Finds the XML text node at a document offset.
+     * 查找文档偏移量处的 XML 文本节点。
      *
-     * @param psiFile current PSI file
-     * @param offset document offset
-     * @return XML text node, or null when the offset is outside XML text
+     * @param psiFile 当前 PSI 文件
+     * @param offset 文档偏移量
+     * @return XML 文本节点；偏移量不在 XML 文本中时返回 null
      */
     private static @Nullable XmlText findXmlTextAt(@NotNull PsiFile psiFile, int offset) {
         if (psiFile.getTextLength() == 0) {
@@ -254,12 +266,12 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
     }
 
     /**
-     * Finds case-insensitive whole-word occurrences inside a SQL range.
+     * 在 SQL 范围内查找忽略大小写的整词出现位置。
      *
-     * @param text full editor text
-     * @param sqlRange SQL range to scan
-     * @param word selected word
-     * @return occurrence ranges in editor offsets
+     * @param text 完整编辑器文本
+     * @param sqlRange 要扫描的 SQL 范围
+     * @param word 所选单词
+     * @return 编辑器偏移量中的出现位置范围
      */
     private static @NotNull List<TextRange> findOccurrences(
             @NotNull CharSequence text,
@@ -280,6 +292,7 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
                 return occurrences;
             }
 
+            // 已匹配的单词内部不用重复检查，下一个循环从匹配末尾之后继续。
             offset += wordLength - 1;
         }
 
@@ -287,13 +300,13 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
     }
 
     /**
-     * Checks a case-insensitive whole-word match at an offset.
+     * 检查指定偏移量处是否为忽略大小写的整词匹配。
      *
-     * @param text full editor text
-     * @param offset possible match offset
-     * @param word selected word
-     * @param sqlRange SQL range being scanned
-     * @return true when the selected word fully matches at the offset
+     * @param text 完整编辑器文本
+     * @param offset 可能匹配的偏移量
+     * @param word 所选单词
+     * @param sqlRange 正在扫描的 SQL 范围
+     * @return 所选单词在该偏移量完整匹配时返回 true
      */
     private static boolean isWholeWordMatch(
             @NotNull CharSequence text,
@@ -302,6 +315,7 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
             @NotNull TextRange sqlRange
     ) {
         int endOffset = offset + word.length();
+        // 前后都是标识符字符时属于更长单词的一部分，不算整词匹配。
         if (offset > sqlRange.getStartOffset() && isIdentifierPart(text.charAt(offset - 1))) {
             return false;
         }
@@ -319,10 +333,10 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
     }
 
     /**
-     * Checks whether a selected text is eligible for whole-word occurrence highlighting.
+     * 检查所选文本是否适合做整词出现位置高亮。
      *
-     * @param text selected text
-     * @return true when the selected text is one SQL identifier-like word
+     * @param text 所选文本
+     * @return 所选文本是单个类似 SQL 标识符的单词时返回 true
      */
     private static boolean isHighlightableWord(@Nullable String text) {
         if (text == null || text.isEmpty()) {
@@ -339,33 +353,33 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
     }
 
     /**
-     * Checks whether a range contains another range.
+     * 检查一个范围是否包含另一个范围。
      *
-     * @param container outer range
-     * @param start inner start offset
-     * @param end inner end offset
-     * @return true when the inner range is fully inside the outer range
+     * @param container 外层范围
+     * @param start 内层起始偏移量
+     * @param end 内层结束偏移量
+     * @return 内层范围完全位于外层范围内时返回 true
      */
     private static boolean containsRange(@NotNull TextRange container, int start, int end) {
         return start >= container.getStartOffset() && end <= container.getEndOffset();
     }
 
     /**
-     * Checks whether a character is part of a SQL identifier-like word.
+     * 检查字符是否属于类似 SQL 标识符的单词。
      *
-     * @param c character to check
-     * @return true when the character belongs to an identifier-like word
+     * @param c 要检查的字符
+     * @return 字符属于类似标识符的单词时返回 true
      */
     private static boolean isIdentifierPart(char c) {
         return Character.isLetterOrDigit(c) || c == '_' || c == '$';
     }
 
     /**
-     * Compares two characters case-insensitively.
+     * 忽略大小写比较两个字符。
      *
-     * @param left first character
-     * @param right second character
-     * @return true when characters match ignoring case
+     * @param left 第一个字符
+     * @param right 第二个字符
+     * @return 两个字符忽略大小写后相等时返回 true
      */
     private static boolean equalsIgnoreCase(char left, char right) {
         return Character.toUpperCase(left) == Character.toUpperCase(right)
@@ -373,35 +387,36 @@ public final class SqlToySqlWordOccurrenceHighlighter implements EditorFactoryLi
     }
 
     /**
-     * Resolves occurrence highlight attributes from the current color scheme.
+     * 从当前配色方案解析出现位置高亮属性。
      *
-     * @param editor current editor
-     * @return text attributes for occurrence highlights
+     * @param editor 当前编辑器
+     * @return 出现位置高亮的文本属性
      */
     private static @NotNull TextAttributes getOccurrenceAttributes(@NotNull Editor editor) {
+        // 优先复用 IDE 当前主题的“光标下标识符”样式，缺失时再用备用背景色。
         TextAttributes attributes = editor.getColorsScheme().getAttributes(
                 EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES
         );
-        return attributes == null ? FALLBACK_ATTRIBUTES : attributes;
+        return attributes == null ? createFallbackAttributes() : attributes;
     }
 
     /**
-     * Creates a scheme-independent fallback background highlight.
+     * 创建不依赖配色方案的备用背景高亮。
      *
-     * @return fallback text attributes
+     * @return 备用文本属性
      */
     private static @NotNull TextAttributes createFallbackAttributes() {
         TextAttributes attributes = new TextAttributes();
-        attributes.setBackgroundColor(new JBColor(new Color(255, 236, 150), new Color(80, 73, 36)));
+        attributes.setBackgroundColor(new Color(255, 236, 150));
         return attributes;
     }
 
     /**
-     * Listeners and highlighters owned by a single editor.
+     * 单个编辑器拥有的监听器和高亮器。
      *
-     * @param selectionListener selection listener installed on the editor
-     * @param caretListener caret listener installed on the editor
-     * @param highlighters active range highlighters
+     * @param selectionListener 安装在编辑器上的选区监听器
+     * @param caretListener 安装在编辑器上的光标监听器
+     * @param highlighters 当前活动的范围高亮器
      */
     private record EditorState(
             @NotNull SelectionListener selectionListener,

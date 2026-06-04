@@ -7,7 +7,7 @@ import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Calculates SQL text ranges inside SqlToy XML text nodes.
+ * 计算 SqlToy XML 文本节点中的 SQL 文本范围。
  *
  * @author ax
  * @date 2026-05-30
@@ -15,31 +15,31 @@ import org.jetbrains.annotations.NotNull;
 final class SqlToyXmlSqlTextRanges {
 
     /**
-     * CDATA opening marker.
+     * CDATA 开始标记。
      */
     private static final String CDATA_START = "<![CDATA[";
 
     /**
-     * CDATA closing marker.
+     * CDATA 结束标记。
      */
     private static final String CDATA_END = "]]>";
 
     /**
-     * Utility class; instances are not needed.
+     * 工具类，不需要创建实例。
      */
     private SqlToyXmlSqlTextRanges() {
     }
 
     /**
-     * Finds the nearest parent SqlToy SQL tag for an XML text node.
+     * 查找 XML 文本节点最近的父级 SqlToy SQL 标签。
      *
-     * @param xmlText XML text node
-     * @return matching SQL tag, or null when the text is outside SqlToy SQL
+     * @param xmlText XML 文本节点
+     * @return 匹配的 SQL 标签；文本不在 SqlToy SQL 中时返回 null
      */
     static XmlTag getSqlToySqlTag(@NotNull XmlText xmlText) {
         PsiElement current = xmlText;
         while (current != null) {
-            // Walk upward because XML text can be wrapped by intermediate PSI nodes.
+            // 向上遍历，因为 XML 文本可能被中间 PSI 节点包裹。
             if (current instanceof XmlTag tag && SqlToySqlIdXmlResolver.isSqlToySqlTag(tag)) {
                 return tag;
             }
@@ -51,16 +51,16 @@ final class SqlToyXmlSqlTextRanges {
     }
 
     /**
-     * Returns the meaningful SQL range inside an XML text node.
+     * 返回 XML 文本节点中有意义的 SQL 范围。
      *
-     * @param text XML text content
-     * @return range excluding surrounding whitespace and optional CDATA wrapper
+     * @param text XML 文本内容
+     * @return 排除周围空白和可选 CDATA 包裹后的范围
      */
     static TextRange getSqlTextRange(@NotNull String text) {
         int start = 0;
         int end = text.length();
 
-        // Trim outer whitespace before checking for CDATA markers.
+        // 检查 CDATA 标记前先裁剪外围空白。
         start = skipLeadingWhitespace(text, start, end);
         end = skipTrailingWhitespace(text, start, end);
 
@@ -68,7 +68,7 @@ final class SqlToyXmlSqlTextRanges {
             start += CDATA_START.length();
             end -= CDATA_END.length();
 
-            // Trim whitespace inside CDATA so only SQL tokens are highlighted.
+            // 裁剪 CDATA 内部空白，使高亮只覆盖 SQL 词法单元。
             start = skipLeadingWhitespace(text, start, end);
             end = skipTrailingWhitespace(text, start, end);
         }
@@ -77,12 +77,12 @@ final class SqlToyXmlSqlTextRanges {
     }
 
     /**
-     * Checks whether the current trimmed range is wrapped in CDATA.
+     * 检查当前裁剪后的范围是否被 CDATA 包裹。
      *
-     * @param text source text
-     * @param start trimmed start offset
-     * @param end trimmed end offset
-     * @return true when CDATA markers wrap the range
+     * @param text 源文本
+     * @param start 裁剪后的起始偏移量
+     * @param end 裁剪后的结束偏移量
+     * @return CDATA 标记包裹该范围时返回 true
      */
     private static boolean hasCDataWrapper(@NotNull String text, int start, int end) {
         return end - start >= CDATA_START.length() + CDATA_END.length()
@@ -91,12 +91,12 @@ final class SqlToyXmlSqlTextRanges {
     }
 
     /**
-     * Skips whitespace from the start of a range.
+     * 从范围起点跳过空白字符。
      *
-     * @param text source text
-     * @param start start offset
-     * @param end end offset
-     * @return first non-whitespace offset
+     * @param text 源文本
+     * @param start 起始偏移量
+     * @param end 结束偏移量
+     * @return 第一个非空白字符的偏移量
      */
     private static int skipLeadingWhitespace(@NotNull String text, int start, int end) {
         while (start < end && Character.isWhitespace(text.charAt(start))) {
@@ -107,12 +107,12 @@ final class SqlToyXmlSqlTextRanges {
     }
 
     /**
-     * Skips whitespace from the end of a range.
+     * 从范围终点向前跳过空白字符。
      *
-     * @param text source text
-     * @param start start offset
-     * @param end end offset
-     * @return end offset after trimming
+     * @param text 源文本
+     * @param start 起始偏移量
+     * @param end 结束偏移量
+     * @return 裁剪后的结束偏移量
      */
     private static int skipTrailingWhitespace(@NotNull String text, int start, int end) {
         while (end > start && Character.isWhitespace(text.charAt(end - 1))) {

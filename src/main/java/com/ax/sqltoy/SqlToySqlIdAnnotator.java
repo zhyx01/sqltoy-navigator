@@ -7,37 +7,25 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
 
 /**
- * Adds a visual underline to Java sqlId strings that resolve to XML definitions.
+ * 为能解析到 XML 定义的 Java sqlId 字符串添加可视下划线。
  *
  * @author ax
  * @date 2026-05-30
  */
 public final class SqlToySqlIdAnnotator implements Annotator {
 
-    /**
-     * Green underline color used for resolvable sqlId literals.
-     */
-    private static final Color UNDERLINE_COLOR = new JBColor(
-            new Color(104, 168, 113),
-            new Color(104, 168, 113)
-    );
+    private static final Color UNDERLINE_COLOR = new Color(104, 168, 113);
 
     /**
-     * Cached underline attributes reused for all Java sqlId annotations.
-     */
-    private static final TextAttributes SQL_ID_UNDERLINE = createUnderlineAttributes();
-
-    /**
-     * Annotates Java sqlId literals that have matching XML targets.
+     * 标注存在匹配 XML 目标的 Java sqlId 字面量。
      *
-     * @param element PSI element currently being annotated
-     * @param holder annotation holder used to add highlighting
+     * @param element 当前正在标注的 PSI 元素
+     * @param holder 用于添加高亮的标注容器
      */
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
@@ -47,23 +35,23 @@ public final class SqlToySqlIdAnnotator implements Annotator {
         }
 
         String sqlId = SqlToyJavaSqlIdResolver.getSqlId(literalExpression);
-        // Do not underline unresolved candidates; they may be ordinary strings.
+        // 不给未解析的候选值加下划线；它们可能只是普通字符串。
         if (sqlId == null || SqlToySqlIdXmlResolver.findTargets(element.getProject(), sqlId).isEmpty()) {
             return;
         }
 
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                 .range(SqlToyJavaSqlIdResolver.getStringContentTextRange(literalExpression))
-                .enforcedTextAttributes(SQL_ID_UNDERLINE)
+                .enforcedTextAttributes(createUnderlineAttributes())
                 .create();
     }
 
     /**
-     * Creates underline-only text attributes for sqlId literals.
+     * 创建只包含下划线效果的 sqlId 文本属性。
      *
-     * @return underline text attributes
+     * @return 下划线文本属性
      */
-    private static TextAttributes createUnderlineAttributes() {
+    private TextAttributes createUnderlineAttributes() {
         TextAttributes attributes = new TextAttributes();
         attributes.setEffectColor(UNDERLINE_COLOR);
         attributes.setEffectType(EffectType.LINE_UNDERSCORE);

@@ -11,7 +11,7 @@ import java.util.Deque;
 import java.util.Set;
 
 /**
- * Lightweight stateful lexer for SqlToy embedded SQL fragments.
+ * 用于 SqlToy 嵌入式 SQL 片段的轻量有状态词法分析器。
  *
  * @author ax
  * @date 2026-05-30
@@ -19,7 +19,7 @@ import java.util.Set;
 final class SqlToySqlLexer extends LexerBase {
 
     /**
-     * SQL keywords highlighted as language keywords.
+     * 作为语言关键字高亮的 SQL 关键字。
      */
     private static final Set<String> KEYWORDS = Set.of(
             "ADD", "ALL", "ALTER", "AND", "ANY", "AS", "ASC", "BETWEEN", "BY", "CASE",
@@ -33,21 +33,21 @@ final class SqlToySqlLexer extends LexerBase {
     );
 
     /**
-     * Keywords that should still be treated as functions when followed by '('.
+     * 后接 '(' 时仍应按函数处理的关键字。
      */
     private static final Set<String> FUNCTION_KEYWORDS = Set.of(
             "CAST", "COUNT", "MAX", "MIN", "SUM"
     );
 
     /**
-     * Keywords after which the next identifier is normally a table name.
+     * 其后下一个标识符通常是表名的关键字。
      */
     private static final Set<String> TABLE_INTRODUCERS = Set.of(
             "FROM", "JOIN", "UPDATE", "INTO"
     );
 
     /**
-     * Keywords that end a table-name scanning context.
+     * 结束表名扫描上下文的关键字。
      */
     private static final Set<String> TABLE_CONTEXT_ENDERS = Set.of(
             "WHERE", "ON", "SET", "VALUES", "GROUP", "ORDER", "HAVING", "LIMIT", "OFFSET",
@@ -71,12 +71,12 @@ final class SqlToySqlLexer extends LexerBase {
     private final Deque<TableContextState> tableContextStates = new ArrayDeque<>();
 
     /**
-     * Starts lexing a new SQL fragment.
+     * 开始词法分析一个新的 SQL 片段。
      *
-     * @param buffer text buffer to lex
-     * @param startOffset first offset to lex
-     * @param endOffset end offset, exclusive
-     * @param initialState ignored because this lexer keeps only local state
+     * @param buffer 要分析的文本缓冲区
+     * @param startOffset 开始分析的第一个偏移量
+     * @param endOffset 结束偏移量，不包含该位置
+     * @param initialState 被忽略，因为该词法分析器只维护本地状态
      */
     @Override
     public void start(
@@ -89,6 +89,7 @@ final class SqlToySqlLexer extends LexerBase {
         this.startOffset = startOffset;
         this.endOffset = endOffset;
         this.tokenStart = startOffset;
+        // 每次重新开始词法分析都必须清空上下文状态，避免上一个 SQL 片段污染当前片段。
         this.expectingTableName = false;
         this.expectingAlias = false;
         this.expectingTableAlias = false;
@@ -102,9 +103,9 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Returns lexer state for incremental lexing.
+     * 返回用于增量词法分析的状态。
      *
-     * @return always zero because the lexer is intentionally single-state
+     * @return 始终返回 0，因为该词法分析器有意设计为单状态
      */
     @Override
     public int getState() {
@@ -112,9 +113,9 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Returns the current token type.
+     * 返回当前词法单元类型。
      *
-     * @return current token type, or null at the end of the buffer
+     * @return 当前词法单元类型；到达缓冲区末尾时返回 null
      */
     @Override
     public @Nullable IElementType getTokenType() {
@@ -122,9 +123,9 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Returns the current token start offset.
+     * 返回当前词法单元起始偏移量。
      *
-     * @return token start offset
+     * @return 词法单元起始偏移量
      */
     @Override
     public int getTokenStart() {
@@ -132,9 +133,9 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Returns the current token end offset.
+     * 返回当前词法单元结束偏移量。
      *
-     * @return token end offset, exclusive
+     * @return 词法单元结束偏移量，不包含该位置
      */
     @Override
     public int getTokenEnd() {
@@ -142,7 +143,7 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Advances to the next token and updates contextual SQL flags.
+     * 前进到下一个词法单元，并更新 SQL 上下文标记。
      */
     @Override
     public void advance() {
@@ -152,9 +153,9 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Returns the backing buffer.
+     * 返回底层缓冲区。
      *
-     * @return current buffer sequence
+     * @return 当前缓冲区序列
      */
     @Override
     public @NotNull CharSequence getBufferSequence() {
@@ -162,9 +163,9 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Returns the configured buffer end.
+     * 返回配置的缓冲区结束位置。
      *
-     * @return end offset, exclusive
+     * @return 结束偏移量，不包含该位置
      */
     @Override
     public int getBufferEnd() {
@@ -172,7 +173,7 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Locates and classifies the token at {@link #tokenStart}.
+     * 定位并分类 {@link #tokenStart} 处的词法单元。
      */
     private void locateToken() {
         if (tokenStart >= endOffset) {
@@ -183,6 +184,7 @@ final class SqlToySqlLexer extends LexerBase {
 
         char current = buffer.charAt(tokenStart);
 
+        // 先识别有明确边界的词法单元，再处理依赖上下文的标识符。
         if (Character.isWhitespace(current)) {
             tokenEnd = scanWhitespace(tokenStart);
             tokenType = TokenType.WHITE_SPACE;
@@ -218,7 +220,7 @@ final class SqlToySqlLexer extends LexerBase {
             String identifier = getTokenText(tokenStart, tokenEnd);
             boolean keyword = KEYWORDS.contains(identifier);
 
-            // Context flags are checked before generic keyword/identifier classification.
+            // 先检查上下文标记，再进行通用关键字/标识符分类。
             if (expectingParameterName) {
                 tokenType = SqlToySqlTokenTypes.PARAMETER;
             } else if (expectingTableAlias && !keyword) {
@@ -228,6 +230,7 @@ final class SqlToySqlLexer extends LexerBase {
             } else if (expectingTableName) {
                 tokenType = SqlToySqlTokenTypes.TABLE;
             } else if (!keyword && isQualifierBeforeDot(tokenEnd)) {
+                // 在 alias.column 里，点号前的标识符按表别名高亮。
                 tokenType = SqlToySqlTokenTypes.TABLE_ALIAS;
             } else if (isFunctionName(identifier, tokenEnd)) {
                 tokenType = SqlToySqlTokenTypes.FUNCTION;
@@ -245,7 +248,7 @@ final class SqlToySqlLexer extends LexerBase {
             return;
         }
 
-        // Brackets are separate from punctuation so this plugin does not color them.
+        // 括号单独成词法单元，插件本身不为其着色。
         IElementType bracketTokenType = getBracketTokenType(current);
         if (bracketTokenType != null) {
             tokenEnd = tokenStart + 1;
@@ -264,20 +267,20 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Checks the next character without advancing the lexer.
+     * 在不推进词法分析器的情况下检查下一个字符。
      *
-     * @param expected expected next character
-     * @return true when the next character matches
+     * @param expected 期望的下一个字符
+     * @return 下一个字符匹配时返回 true
      */
     private boolean hasNext(char expected) {
         return tokenStart + 1 < endOffset && buffer.charAt(tokenStart + 1) == expected;
     }
 
     /**
-     * Scans a contiguous whitespace run.
+     * 扫描连续的空白字符。
      *
-     * @param offset first whitespace offset
-     * @return first non-whitespace offset
+     * @param offset 第一个空白字符的偏移量
+     * @return 第一个非空白字符的偏移量
      */
     private int scanWhitespace(int offset) {
         while (offset < endOffset && Character.isWhitespace(buffer.charAt(offset))) {
@@ -287,10 +290,10 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Scans a SQL line comment.
+     * 扫描 SQL 行注释。
      *
-     * @param offset first offset after '--'
-     * @return line comment end offset
+     * @param offset '--' 之后的第一个偏移量
+     * @return 行注释结束偏移量
      */
     private int scanLineComment(int offset) {
         while (offset < endOffset) {
@@ -304,10 +307,10 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Scans a SQL block comment.
+     * 扫描 SQL 块注释。
      *
-     * @param offset first offset after '/*'
-     * @return block comment end offset
+     * @param offset '/*' 之后的第一个偏移量
+     * @return 块注释结束偏移量
      */
     private int scanBlockComment(int offset) {
         while (offset + 1 < endOffset) {
@@ -320,11 +323,11 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Scans a quoted SQL string or quoted identifier.
+     * 扫描带引号的 SQL 字符串或带引号标识符。
      *
-     * @param offset quote start offset
-     * @param quote quote character
-     * @return quote end offset
+     * @param offset 引号起始偏移量
+     * @param quote 引号字符
+     * @return 引号结束偏移量
      */
     private int scanQuoted(int offset, char quote) {
         offset++;
@@ -343,10 +346,10 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Scans an integer or simple decimal number.
+     * 扫描整数或简单小数。
      *
-     * @param offset first digit offset
-     * @return number end offset
+     * @param offset 第一个数字的偏移量
+     * @return 数字结束偏移量
      */
     private int scanNumber(int offset) {
         while (offset < endOffset && Character.isDigit(buffer.charAt(offset))) {
@@ -364,10 +367,10 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Scans an SQL identifier-like token.
+     * 扫描类似 SQL 标识符的词法单元。
      *
-     * @param offset identifier start offset
-     * @return identifier end offset
+     * @param offset 标识符起始偏移量
+     * @return 标识符结束偏移量
      */
     private int scanIdentifier(int offset) {
         while (offset < endOffset && isIdentifierPart(buffer.charAt(offset))) {
@@ -377,29 +380,30 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Checks whether a text range is a known SQL keyword.
+     * 检查文本范围是否为已知 SQL 关键字。
      *
-     * @param start range start offset
-     * @param end range end offset
-     * @return true when the range is a keyword
+     * @param start 范围起始偏移量
+     * @param end 范围结束偏移量
+     * @return 范围内容是关键字时返回 true
      */
     private boolean isKeyword(int start, int end) {
         return KEYWORDS.contains(buffer.subSequence(start, end).toString().toUpperCase());
     }
 
     /**
-     * Updates table, alias, and parameter context after the current token.
+     * 根据当前词法单元更新表名、别名和参数上下文。
      */
     private void updateContextAfterCurrentToken() {
         if (tokenType == null || tokenType == TokenType.WHITE_SPACE
                 || tokenType == SqlToySqlTokenTypes.LINE_COMMENT
                 || tokenType == SqlToySqlTokenTypes.BLOCK_COMMENT) {
+            // 空白和注释不改变 SQL 语义上下文。
             return;
         }
 
         if (tokenType == SqlToySqlTokenTypes.KEYWORD) {
             String keyword = getTokenText(tokenStart, tokenEnd);
-            // AS introduces either a select alias or a table alias, depending on context.
+            // AS 会根据上下文引入查询结果别名或表别名。
             if ("AS".equals(keyword)) {
                 boolean tableAliasContext = expectingTableAlias || justReadTableName;
                 expectingAlias = !tableAliasContext;
@@ -408,6 +412,7 @@ final class SqlToySqlLexer extends LexerBase {
                 expectingTableName = false;
                 justReadTableName = false;
             } else if (TABLE_INTRODUCERS.contains(keyword)) {
+                // FROM/JOIN/UPDATE/INTO 后的下一个标识符优先按表名处理。
                 expectingAlias = false;
                 expectingTableAlias = false;
                 expectingParameterName = false;
@@ -415,6 +420,7 @@ final class SqlToySqlLexer extends LexerBase {
                 tableContextActive = true;
                 justReadTableName = false;
             } else if (TABLE_CONTEXT_ENDERS.contains(keyword)) {
+                // WHERE/ON/GROUP 等关键字出现后，表名列表上下文结束。
                 expectingAlias = false;
                 expectingTableAlias = false;
                 expectingParameterName = false;
@@ -431,7 +437,7 @@ final class SqlToySqlLexer extends LexerBase {
             return;
         }
 
-        // A table name may be immediately followed by a table alias.
+        // 表名后面可能紧跟表别名。
         if (tokenType == SqlToySqlTokenTypes.TABLE) {
             expectingAlias = false;
             expectingTableAlias = true;
@@ -478,8 +484,28 @@ final class SqlToySqlLexer extends LexerBase {
             return;
         }
 
-        if (tokenType == SqlToySqlTokenTypes.IDENTIFIER || tokenType == SqlToySqlTokenTypes.FUNCTION) {
+        if (tokenType == SqlToySqlTokenTypes.OPERATOR) {
             expectingAlias = false;
+            expectingTableAlias = false;
+            expectingParameterName = false;
+            justReadTableName = false;
+            expectingTableName = false;
+            return;
+        }
+
+        if (tokenType == SqlToySqlTokenTypes.IDENTIFIER || tokenType == SqlToySqlTokenTypes.FUNCTION) {
+            expectingTableAlias = false;
+            expectingParameterName = false;
+            justReadTableName = false;
+            expectingTableName = false;
+            // 普通表达式标识符后可能跟着选择列别名，函数名本身不触发别名期待。
+            expectingAlias = tokenType == SqlToySqlTokenTypes.IDENTIFIER;
+            return;
+        }
+
+        if (tokenType == SqlToySqlTokenTypes.STRING || tokenType == SqlToySqlTokenTypes.NUMBER) {
+            // SELECT 'x' name 或 SELECT 1 count 这类写法允许字面量后直接跟列别名。
+            expectingAlias = true;
             expectingTableAlias = false;
             expectingParameterName = false;
             justReadTableName = false;
@@ -488,7 +514,7 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Updates lexer context after bracket tokens.
+     * 在括号词法单元后更新词法分析上下文。
      */
     private void updateContextAfterBracket() {
         char bracket = buffer.charAt(tokenStart);
@@ -497,6 +523,7 @@ final class SqlToySqlLexer extends LexerBase {
             parenthesisDepth++;
 
             if (expectingTableName) {
+                // FROM (SELECT ...) 进入派生表：内部不应继续沿用外层表名列表状态。
                 derivedTableParenthesisDepths.push(parenthesisDepth);
                 tableContextStates.push(new TableContextState(tableContextActive));
                 expectingAlias = false;
@@ -523,6 +550,7 @@ final class SqlToySqlLexer extends LexerBase {
                 TableContextState previousState = tableContextStates.isEmpty()
                         ? new TableContextState(false)
                         : tableContextStates.pop();
+                // 派生表关闭后通常需要表别名，例如 FROM (SELECT ...) t。
                 expectingAlias = false;
                 expectingTableAlias = true;
                 expectingParameterName = false;
@@ -530,6 +558,8 @@ final class SqlToySqlLexer extends LexerBase {
                 tableContextActive = previousState.tableContextActive();
                 justReadTableName = true;
             } else {
+                // 普通表达式括号关闭后可能跟列别名，例如 SELECT (a + b) total。
+                expectingAlias = true;
                 expectingParameterName = false;
                 justReadTableName = false;
             }
@@ -545,12 +575,12 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Updates lexer context after punctuation.
+     * 在标点词法单元后更新词法分析上下文。
      */
     private void updateContextAfterPunctuation() {
         char punctuation = buffer.charAt(tokenStart);
 
-        // schema.table keeps the next identifier in table-name context.
+        // schema.table 会让下一个标识符继续保持表名上下文。
         if (punctuation == '.' && justReadTableName) {
             expectingTableName = true;
             expectingTableAlias = false;
@@ -559,7 +589,7 @@ final class SqlToySqlLexer extends LexerBase {
             return;
         }
 
-        // Multiple table names in FROM/JOIN lists are separated by commas.
+        // FROM/JOIN 列表中的多个表名用逗号分隔。
         if (punctuation == ',' && tableContextActive) {
             expectingTableName = true;
             expectingTableAlias = false;
@@ -568,7 +598,7 @@ final class SqlToySqlLexer extends LexerBase {
             return;
         }
 
-        // SqlToy named parameters use :parameterName syntax.
+        // SqlToy 命名参数使用 :parameterName 语法。
         if (punctuation == ':' && tokenStart + 1 < endOffset && isIdentifierStart(buffer.charAt(tokenStart + 1))) {
             expectingAlias = false;
             expectingTableAlias = false;
@@ -579,6 +609,7 @@ final class SqlToySqlLexer extends LexerBase {
         }
 
         if (punctuation != '.') {
+            expectingAlias = false;
             expectingTableAlias = false;
             expectingParameterName = false;
             justReadTableName = false;
@@ -586,14 +617,15 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Determines whether an identifier should be highlighted as a function.
+     * 判断标识符是否应按函数高亮。
      *
-     * @param identifier upper-case identifier text
-     * @param identifierEnd identifier end offset
-     * @return true when the identifier is followed by an opening parenthesis
+     * @param identifier 已转为大写的标识符文本
+     * @param identifierEnd 标识符结束偏移量
+     * @return 标识符后跟左括号时返回 true
      */
     private boolean isFunctionName(@NotNull String identifier, int identifierEnd) {
         if (KEYWORDS.contains(identifier) && !FUNCTION_KEYWORDS.contains(identifier)) {
+            // 大多数关键字即使后面跟左括号，也不按函数名高亮。
             return false;
         }
 
@@ -602,10 +634,10 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Checks whether an identifier is the qualifier in a qualified column reference.
+     * 检查标识符是否为限定列引用中的限定符。
      *
-     * @param identifierEnd identifier end offset
-     * @return true when the identifier is followed by a dot
+     * @param identifierEnd 标识符结束偏移量
+     * @return 标识符后跟点号时返回 true
      */
     private boolean isQualifierBeforeDot(int identifierEnd) {
         int next = skipWhitespace(identifierEnd);
@@ -613,10 +645,10 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Skips whitespace from the given offset.
+     * 从指定偏移量跳过空白字符。
      *
-     * @param offset start offset
-     * @return first non-whitespace offset
+     * @param offset 起始偏移量
+     * @return 第一个非空白字符的偏移量
      */
     private int skipWhitespace(int offset) {
         while (offset < endOffset && Character.isWhitespace(buffer.charAt(offset))) {
@@ -626,21 +658,21 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Reads and normalizes the token text.
+     * 读取并标准化词法单元文本。
      *
-     * @param start token start offset
-     * @param end token end offset
-     * @return upper-case token text
+     * @param start 词法单元起始偏移量
+     * @param end 词法单元结束偏移量
+     * @return 转为大写后的词法单元文本
      */
     private @NotNull String getTokenText(int start, int end) {
         return buffer.subSequence(start, end).toString().toUpperCase();
     }
 
     /**
-     * Scans one or more operator characters.
+     * 扫描一个或多个操作符字符。
      *
-     * @param offset operator start offset
-     * @return operator end offset
+     * @param offset 操作符起始偏移量
+     * @return 操作符结束偏移量
      */
     private int scanOperator(int offset) {
         while (offset < endOffset && isOperator(buffer.charAt(offset))) {
@@ -650,50 +682,50 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Checks whether a character can start an identifier.
+     * 检查字符是否可以作为标识符开头。
      *
-     * @param c character to check
-     * @return true when the character can start an identifier
+     * @param c 要检查的字符
+     * @return 字符可以作为标识符开头时返回 true
      */
     private static boolean isIdentifierStart(char c) {
         return Character.isLetter(c) || c == '_' || c == '$';
     }
 
     /**
-     * Checks whether a character can continue an identifier.
+     * 检查字符是否可以作为标识符后续字符。
      *
-     * @param c character to check
-     * @return true when the character can continue an identifier
+     * @param c 要检查的字符
+     * @return 字符可以作为标识符后续字符时返回 true
      */
     private static boolean isIdentifierPart(char c) {
         return Character.isLetterOrDigit(c) || c == '_' || c == '$';
     }
 
     /**
-     * Checks whether a character is an SQL operator.
+     * 检查字符是否为 SQL 操作符。
      *
-     * @param c character to check
-     * @return true when the character is an operator
+     * @param c 要检查的字符
+     * @return 字符是操作符时返回 true
      */
     private static boolean isOperator(char c) {
         return "=<>!+-*/%|&^~".indexOf(c) >= 0;
     }
 
     /**
-     * Checks whether a character is non-bracket punctuation.
+     * 检查字符是否为非括号标点。
      *
-     * @param c character to check
-     * @return true when the character is punctuation
+     * @param c 要检查的字符
+     * @return 字符是标点时返回 true
      */
     private static boolean isPunctuation(char c) {
         return ".,;:#".indexOf(c) >= 0;
     }
 
     /**
-     * Checks whether a token type represents any bracket token.
+     * 检查词法单元类型是否表示任意括号。
      *
-     * @param tokenType token type to check
-     * @return true when token type is a bracket
+     * @param tokenType 要检查的词法单元类型
+     * @return 词法单元类型是括号时返回 true
      */
     private static boolean isBracketToken(@NotNull IElementType tokenType) {
         return tokenType == SqlToySqlTokenTypes.LPAREN
@@ -705,10 +737,10 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Maps bracket characters to dedicated bracket token types.
+     * 将括号字符映射为专用括号词法单元类型。
      *
-     * @param c character to map
-     * @return bracket token type, or null for non-brackets
+     * @param c 要映射的字符
+     * @return 括号词法单元类型；非括号时返回 null
      */
     private static IElementType getBracketTokenType(char c) {
         return switch (c) {
@@ -723,9 +755,9 @@ final class SqlToySqlLexer extends LexerBase {
     }
 
     /**
-     * Table scanning state outside a derived-table parenthesis.
+     * 派生表括号外的表扫描状态。
      *
-     * @param tableContextActive whether commas still introduce more table names
+     * @param tableContextActive 逗号是否仍会引入更多表名
      */
     private record TableContextState(boolean tableContextActive) {
     }

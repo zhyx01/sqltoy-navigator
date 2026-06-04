@@ -4,9 +4,39 @@
     <vendor email="zhouyx.ax@gmail.com">ax</vendor>
 
     <description><![CDATA[
-        Provides navigation from Java SqlToy sqlId string literals to SqlToy XML SQL definitions,
-        and highlights SQL syntax inside SqlToy XML SQL tags.
-        Example: "view_user_list" -> <sql id="view_user_list">...</sql>
+        <p>
+            SqlToy Navigator helps developers jump between Java sqlId strings and XML SQL definitions.
+        </p>
+
+        <p>
+            <b>SqlToy Navigator</b> 是一款面向 SqlToy ORM 项目的 IntelliJ IDEA 插件，
+            用于在 Java 代码中的 <code>sqlId</code> 字符串与 XML 文件中的 SQL 定义之间快速跳转。
+        </p>
+
+        <p>
+            在 SqlToy 项目中，SQL 通常定义在 XML 文件中，Java 代码通过字符串形式引用对应的
+            <code>sqlId</code>。当项目规模变大后，开发者经常需要在 Java 类、XML 文件和搜索结果之间反复切换，
+            不仅效率较低，也容易出现定位错误。
+        </p>
+
+        <p>
+            SqlToy Navigator 可以减少手动搜索成本，让 <code>sqlId</code> 定位、SQL 查看和代码维护更加直观高效。
+        </p>
+
+        <h3>核心功能</h3>
+        <ul>
+            <li>支持从 Java <code>sqlId</code> 字符串跳转到 XML 中对应的 SQL 定义。</li>
+            <li>支持从 XML SQL 定义跳转回 Java 使用位置。</li>
+            <li>在 Java 字符串和 XML <code>id</code> 属性旁显示双向导航行标记。</li>
+            <li>增强 XML 中 SQL 内容的编辑体验，支持 SQL 高亮、参数识别和括号匹配。</li>
+            <li>支持当前 SQL 块内单词高亮，便于查看字段、别名和参数出现位置。</li>
+            <li>对未被 Java 代码引用的 XML <code>sqlId</code> 进行置灰提示。</li>
+        </ul>
+
+        <p>
+            在 Java 字符串 <code>"view_user_list"</code> 上使用 <b>Ctrl + Click</b>，
+            macOS 使用 <b>Command + Click</b>，即可跳转到 XML 中对应的 SQL 定义。
+        </p>
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
@@ -41,7 +71,5 @@
         <codeInsight.lineMarkerProvider
                 language="XML"
                 implementationClass="com.ax.sqltoy.SqlToySqlIdLineMarkerProvider"/>
-        <multiHostInjector
-                implementation="com.ax.sqltoy.SqlToyXmlSqlLanguageInjector"/>
     </extensions>
 </idea-plugin>

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Provides paired brace metadata for the embedded SqlToy SQL language.
+ * 提供嵌入式 SqlToy SQL 语言的成对括号元数据。
  *
  * @author ax
  * @date 2026-05-30
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public final class SqlToySqlBraceMatcher implements PairedBraceMatcher {
 
     /**
-     * Supported SQL fragment bracket pairs.
+     * 支持的 SQL 片段括号配对。
      */
     private static final BracePair[] PAIRS = new BracePair[]{
             new BracePair(SqlToySqlTokenTypes.LPAREN, SqlToySqlTokenTypes.RPAREN, false),
@@ -25,9 +25,9 @@ public final class SqlToySqlBraceMatcher implements PairedBraceMatcher {
     };
 
     /**
-     * Returns all bracket pairs known to SqlToy SQL.
+     * 返回 SqlToy SQL 已知的全部括号配对。
      *
-     * @return supported brace pairs
+     * @return 支持的括号配对
      */
     @Override
     public BracePair @NotNull [] getPairs() {
@@ -35,11 +35,11 @@ public final class SqlToySqlBraceMatcher implements PairedBraceMatcher {
     }
 
     /**
-     * Allows opening braces before any token so incomplete SQL remains editable.
+     * 允许左括号出现在任意词法单元之前，使未完成 SQL 仍可编辑。
      *
-     * @param lbraceType opening brace token type
-     * @param contextType token type after the opening brace, if any
-     * @return always true for lightweight embedded SQL
+     * @param lbraceType 左括号词法单元类型
+     * @param contextType 左括号后的词法单元类型，可能为空
+     * @return 对轻量嵌入式 SQL 始终返回 true
      */
     @Override
     public boolean isPairedBracesAllowedBeforeType(
@@ -50,11 +50,11 @@ public final class SqlToySqlBraceMatcher implements PairedBraceMatcher {
     }
 
     /**
-     * Uses the opening brace itself as the construct start.
+     * 使用左括号自身作为代码结构起点。
      *
-     * @param file PSI file that owns the injected fragment
-     * @param openingBraceOffset opening brace offset
-     * @return opening brace offset
+     * @param file 拥有注入片段的 PSI 文件
+     * @param openingBraceOffset 左括号偏移量
+     * @return 左括号偏移量
      */
     @Override
     public int getCodeConstructStart(@NotNull PsiFile file, int openingBraceOffset) {
