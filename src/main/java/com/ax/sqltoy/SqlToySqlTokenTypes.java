@@ -5,14 +5,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Token type registry for the lightweight SqlToy SQL lexer.
+ * 轻量级 SqlToy SQL 词法分析器的词法单元类型注册表。
  *
  * @author ax
  * @date 2026-05-30
  */
 final class SqlToySqlTokenTypes {
 
-    // SQL semantic tokens used by the syntax highlighter.
+    // 语法高亮器使用的 SQL 语义词法单元。
     static final IElementType KEYWORD = new SqlToySqlTokenType("KEYWORD");
     static final IElementType IDENTIFIER = new SqlToySqlTokenType("IDENTIFIER");
     static final IElementType FUNCTION = new SqlToySqlTokenType("FUNCTION");
@@ -27,7 +27,7 @@ final class SqlToySqlTokenTypes {
     static final IElementType OPERATOR = new SqlToySqlTokenType("OPERATOR");
     static final IElementType PUNCTUATION = new SqlToySqlTokenType("PUNCTUATION");
 
-    // Bracket tokens are kept colorless so Rainbow Brackets can own their colors.
+    // 括号词法单元保持无色，以便由 Rainbow Brackets 接管颜色。
     static final IElementType LPAREN = new SqlToySqlTokenType("LPAREN");
     static final IElementType RPAREN = new SqlToySqlTokenType("RPAREN");
     static final IElementType LBRACKET = new SqlToySqlTokenType("LBRACKET");
@@ -36,22 +36,22 @@ final class SqlToySqlTokenTypes {
     static final IElementType RBRACE = new SqlToySqlTokenType("RBRACE");
 
     /**
-     * Utility class; instances are not needed.
+     * 工具类，不需要创建实例。
      */
     private SqlToySqlTokenTypes() {
     }
 
     /**
-     * Token type bound to the SqlToy SQL language instance.
+     * 绑定到 SqlToy SQL 语言实例的词法单元类型。
      *
      * @author ax
      * @date 2026-05-30
      */
     private static final class SqlToySqlTokenType extends IElementType {
         /**
-         * Creates a token type with a readable debug name.
+         * 使用可读的调试名称创建词法单元类型。
          *
-         * @param debugName token debug name displayed in PSI diagnostics
+         * @param debugName 在 PSI 诊断中显示的词法单元调试名称
          */
         private SqlToySqlTokenType(@NotNull @NonNls String debugName) {
             super(debugName, SqlToySqlLanguage.INSTANCE);

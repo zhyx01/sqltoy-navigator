@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Color;
 
 /**
- * Adds XML-side annotations for SqlToy SQL definitions.
+ * 为 SqlToy SQL 定义添加 XML 侧标注。
  *
  * @author ax
  * @date 2026-05-30
@@ -28,7 +28,7 @@ import java.awt.Color;
 public final class SqlToyXmlSqlAnnotator implements Annotator {
 
     /**
-     * Shared highlighter used to classify XML text as SqlToy SQL.
+     * 用于把 XML 文本分类为 SqlToy SQL 的共享高亮器。
      */
     private static final SqlToySqlSyntaxHighlighter HIGHLIGHTER = new SqlToySqlSyntaxHighlighter();
 
@@ -37,13 +37,14 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
     private static final Color UNUSED_SQL_ID_COLOR = new Color(128, 128, 128);
 
     /**
-     * Adds SQL token highlighting to XML text nodes inside SqlToy SQL tags.
+     * 为 SqlToy SQL 标签内的 XML 文本节点添加 SQL 词法高亮。
      *
-     * @param element XML PSI element currently being annotated
-     * @param holder annotation holder used to add text attributes
+     * @param element 当前正在标注的 XML PSI 元素
+     * @param holder 用于添加文本属性的标注容器
      */
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+        // 同一个 annotator 同时负责 sqlId 未引用提示和 SQL 正文语法高亮。
         annotateUnusedXmlSqlId(element, holder);
 
         if (!(element instanceof XmlText xmlText)) {
@@ -70,10 +71,10 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
     }
 
     /**
-     * Grays out XML SQL ids that are not referenced from Java code.
+     * 将没有被 Java 代码引用的 XML SQL id 置灰。
      *
-     * @param element XML PSI element currently being annotated
-     * @param holder annotation holder used to add text attributes
+     * @param element 当前正在标注的 XML PSI 元素
+     * @param holder 用于添加文本属性的标注容器
      */
     private void annotateUnusedXmlSqlId(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
         if (!(element instanceof XmlToken xmlToken) || xmlToken.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
@@ -94,6 +95,7 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
             return;
         }
 
+        // 反向查找 Java 引用依赖索引，Dumb Mode 中不提示未使用，避免误报。
         if (DumbService.isDumb(element.getProject())) {
             return;
         }
@@ -109,11 +111,11 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
     }
 
     /**
-     * Applies a color annotation for a single lexer token.
+     * 为单个词法单元应用颜色标注。
      *
-     * @param xmlText XML text host that owns the token
-     * @param holder annotation holder used to add highlighting
-     * @param lexer lexer positioned on the token to highlight
+     * @param xmlText 拥有该词法单元的 XML 文本宿主
+     * @param holder 用于添加高亮的标注容器
+     * @param lexer 已定位到待高亮词法单元的词法分析器
      */
     private static void highlightToken(
             @NotNull XmlText xmlText,
@@ -136,8 +138,10 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
 
         var builder = holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(tokenRange);
         if (tokenType == SqlToySqlTokenTypes.FUNCTION) {
+            // IDEA 的默认函数颜色在 XML 注解里不一定稳定，这里强制函数前景色。
             builder.enforcedTextAttributes(createForegroundAttributes(FUNCTION_COLOR));
         } else if (tokenType == SqlToySqlTokenTypes.PARAMETER) {
+            // SqlToy 命名参数用单独颜色突出显示，方便和普通标识符区分。
             builder.enforcedTextAttributes(createForegroundAttributes(PARAMETER_COLOR));
         } else {
             builder.textAttributes(attributes[0]);
@@ -146,10 +150,10 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
     }
 
     /**
-     * Builds foreground-only text attributes.
+     * 构建只设置前景色的文本属性。
      *
-     * @param color foreground color
-     * @return text attributes with only foreground configured
+     * @param color 前景色
+     * @return 仅配置前景色的文本属性
      */
     private static TextAttributes createForegroundAttributes(@NotNull Color color) {
         TextAttributes attributes = new TextAttributes();

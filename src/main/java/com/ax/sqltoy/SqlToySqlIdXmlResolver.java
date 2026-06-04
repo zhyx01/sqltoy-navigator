@@ -29,7 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Resolves SqlToy XML SQL definitions by sqlId.
+ * 按 sqlId 解析 SqlToy XML SQL 定义。
  *
  * @author ax
  * @date 2026-05-30
@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 final class SqlToySqlIdXmlResolver {
 
     /**
-     * Keep the filter loose enough for common SqlToy ids:
+     * 对常见 SqlToy id 保持较宽松的过滤规则：
      * trace_param_fault_moduleId
      * module.queryList
      * a-b/c:test
@@ -45,33 +45,34 @@ final class SqlToySqlIdXmlResolver {
     private static final Pattern SQL_ID_PATTERN = Pattern.compile("[A-Za-z0-9_.$:/\\-]+");
 
     /**
-     * Word-index friendly fragments inside a SqlToy sqlId.
+     * SqlToy sqlId 中适合单词索引的片段。
      */
     private static final Pattern INDEXABLE_WORD_PATTERN = Pattern.compile("[A-Za-z0-9_]+");
 
     /**
-     * Cached XML definitions grouped by sqlId for one XML file.
+     * 单个 XML 文件内按 sqlId 分组缓存的 XML 定义。
      */
     private static final Key<CachedValue<Map<String, List<SqlIdTarget>>>> XML_TARGETS_CACHE =
             Key.create("SqlToyXmlTargetsCache");
 
     /**
-     * Utility class; instances are not needed.
+     * 工具类，不需要创建实例。
      */
     private SqlToySqlIdXmlResolver() {
     }
 
     /**
-     * Checks whether a string looks like a SqlToy sqlId.
+     * 检查字符串是否看起来像 SqlToy sqlId。
      *
-     * @param value candidate value
-     * @return true when the value is a reasonable sqlId candidate
+     * @param value 候选值
+     * @return 值是合理 sqlId 候选时返回 true
      */
     static boolean maybeSqlId(String value) {
         if (value == null) {
             return false;
         }
 
+        // 过长或空白字符串更可能是 SQL 正文或普通文本，不应参与 sqlId 导航。
         if (value.isBlank() || value.length() > 200) {
             return false;
         }
@@ -80,13 +81,14 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
-     * Finds XML definitions for a specific sqlId.
+     * 查找指定 sqlId 的 XML 定义。
      *
-     * @param project current project
-     * @param sqlId sqlId to find
-     * @return matching XML targets
+     * @param project 当前项目
+     * @param sqlId 要查找的 sqlId
+     * @return 匹配的 XML 目标
      */
     static List<SqlIdTarget> findTargets(@NotNull Project project, @NotNull String sqlId) {
+        // 依赖文件索引和 PSI 缓存，索引未完成时直接返回空结果。
         if (DumbService.isDumb(project)) {
             return List.of();
         }
@@ -100,10 +102,10 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
-     * Finds every SqlToy SQL definition in project XML files.
+     * 查找项目 XML 文件中的全部 SqlToy SQL 定义。
      *
-     * @param project current project
-     * @return all discovered XML sqlId targets
+     * @param project 当前项目
+     * @return 所有发现的 XML sqlId 目标
      */
     static List<SqlIdTarget> findAllTargets(@NotNull Project project) {
         List<SqlIdTarget> result = new ArrayList<>();
@@ -125,15 +127,17 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
-     * Returns XML files that contain an indexable fragment of the sqlId.
+     * 返回包含 sqlId 可索引片段的 XML 文件。
      *
-     * @param project current project
-     * @param sqlId sqlId to find
-     * @return candidate XML PSI files
+     * @param project 当前项目
+     * @param sqlId 要查找的 sqlId
+     * @return 候选 XML PSI 文件
      */
     private static List<XmlFile> findCandidateXmlFiles(@NotNull Project project, @NotNull String sqlId) {
+        // 用可索引片段先缩小 XML 文件范围，再在候选文件里精确解析 <sql id="...">。
         String searchWord = getIndexSearchWord(sqlId);
         if (searchWord == null) {
+            // 没有可索引片段时只能遍历项目内所有 XML 文件。
             return findAllXmlFiles(project);
         }
 
@@ -155,10 +159,10 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
-     * Returns all XML files in project scope.
+     * 返回项目范围内的所有 XML 文件。
      *
-     * @param project current project
-     * @return XML PSI files
+     * @param project 当前项目
+     * @return XML PSI 文件
      */
     private static List<XmlFile> findAllXmlFiles(@NotNull Project project) {
         List<XmlFile> result = new ArrayList<>();
@@ -180,16 +184,17 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
-     * Returns cached XML definitions grouped by sqlId for one XML file.
+     * 返回单个 XML 文件内按 sqlId 分组缓存的 XML 定义。
      *
-     * @param xmlFile XML file to inspect
-     * @param fileName source XML file name
-     * @return sqlId to XML target map
+     * @param xmlFile 要检查的 XML 文件
+     * @param fileName 源 XML 文件名
+     * @return sqlId 到 XML 目标列表的映射
      */
     private static Map<String, List<SqlIdTarget>> getTargetsById(
             @NotNull XmlFile xmlFile,
             @NotNull String fileName
     ) {
+        // 缓存依赖 XML PSI 文件，编辑 XML 后会自动重新收集 sqlId 定义。
         return CachedValuesManager.getManager(xmlFile.getProject()).getCachedValue(
                 xmlFile,
                 XML_TARGETS_CACHE,
@@ -199,11 +204,11 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
-     * Finds every SqlToy SQL definition in one XML file and groups them by sqlId.
+     * 在单个 XML 文件中查找全部 SqlToy SQL 定义，并按 sqlId 分组。
      *
-     * @param xmlFile XML file to inspect
-     * @param fileName source XML file name
-     * @return sqlId to XML target map
+     * @param xmlFile 要检查的 XML 文件
+     * @param fileName 源 XML 文件名
+     * @return sqlId 到 XML 目标列表的映射
      */
     private static Map<String, List<SqlIdTarget>> collectTargetsById(
             @NotNull XmlFile xmlFile,
@@ -212,6 +217,7 @@ final class SqlToySqlIdXmlResolver {
         List<SqlIdTarget> result = new ArrayList<>();
         XmlTag rootTag = xmlFile.getRootTag();
         if (rootTag == null) {
+            // 非完整 XML 或空文件没有根标签，直接返回空映射。
             return Map.of();
         }
 
@@ -226,10 +232,10 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
-     * Chooses the longest word-indexable fragment of a sqlId.
+     * 选择 sqlId 中最长的可索引单词片段。
      *
-     * @param sqlId sqlId to search
-     * @return indexable word, or null when no word fragment exists
+     * @param sqlId 要搜索的 sqlId
+     * @return 可索引单词；没有单词片段时返回 null
      */
     static String getIndexSearchWord(@NotNull String sqlId) {
         String bestWord = null;
@@ -237,6 +243,7 @@ final class SqlToySqlIdXmlResolver {
         while (matcher.find()) {
             String word = matcher.group();
             if (bestWord == null || word.length() > bestWord.length()) {
+                // 选最长片段通常能让索引命中文件更少，降低后续 PSI 解析成本。
                 bestWord = word;
             }
         }
@@ -245,11 +252,11 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
-     * Recursively collects sqlId definitions under an XML tag.
+     * 递归收集 XML 标签下的 sqlId 定义。
      *
-     * @param tag XML tag to inspect
-     * @param fileName source XML file name
-     * @param result target list to append to
+     * @param tag 要检查的 XML 标签
+     * @param fileName 源 XML 文件名
+     * @param result 用于追加目标的列表
      */
     private static void collectSqlIds(
             @NotNull XmlTag tag,
@@ -260,28 +267,30 @@ final class SqlToySqlIdXmlResolver {
         if (sqlId != null) {
             XmlAttribute idAttribute = tag.getAttribute("id");
             XmlAttributeValue valueElement = getSqlIdValueElement(tag);
-            // Navigate to the attribute value when possible so the caret lands on the id text.
+            // 尽量导航到属性值元素，使光标落在 id 文本上。
             PsiElement navigationTarget = valueElement != null ? valueElement : idAttribute;
 
             result.add(new SqlIdTarget(sqlId, navigationTarget, fileName));
         }
 
         for (XmlTag subTag : tag.getSubTags()) {
+            // 递归处理嵌套标签，兼容 SQL 定义被分组或包装的 XML 结构。
             collectSqlIds(subTag, fileName, result);
         }
     }
 
     /**
-     * Returns the SqlToy SQL tag that owns an XML id attribute value.
+     * 返回拥有 XML id 属性值的 SqlToy SQL 标签。
      *
-     * @param valueElement XML attribute value element
-     * @return owning SqlToy SQL tag, or null when the value is not a sqlId
+     * @param valueElement XML 属性值元素
+     * @return 所属的 SqlToy SQL 标签；如果该值不是 sqlId，则返回 null
      */
     static XmlTag getSqlTagForIdValue(@NotNull XmlAttributeValue valueElement) {
         if (!(valueElement.getParent() instanceof XmlAttribute attribute)) {
             return null;
         }
 
+        // 只接受 id 属性，避免误把其他属性值当成 sqlId。
         if (!"id".equals(attribute.getName())) {
             return null;
         }
@@ -291,10 +300,10 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
-     * Reads the sqlId from a SqlToy SQL XML tag.
+     * 从 SqlToy SQL XML 标签读取 sqlId。
      *
-     * @param tag XML tag to inspect
-     * @return sqlId value, or null when the tag is not a SqlToy SQL tag
+     * @param tag 要检查的 XML 标签
+     * @return sqlId 值；如果标签不是 SqlToy SQL 标签，则返回 null
      */
     static String getSqlId(@NotNull XmlTag tag) {
         if (!isSqlToySqlTag(tag)) {
@@ -306,10 +315,10 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
-     * Returns the XML attribute value element that contains the sqlId text.
+     * 返回包含 sqlId 文本的 XML 属性值元素。
      *
-     * @param tag XML tag to inspect
-     * @return id attribute value element, or null when absent
+     * @param tag 要检查的 XML 标签
+     * @return id 属性值元素；不存在时返回 null
      */
     static XmlAttributeValue getSqlIdValueElement(@NotNull XmlTag tag) {
         XmlAttribute idAttribute = tag.getAttribute("id");
@@ -317,21 +326,21 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
-     * Checks whether an XML tag is a SqlToy SQL definition.
+     * 检查 XML 标签是否为 SqlToy SQL 定义。
      *
-     * @param tag XML tag to inspect
-     * @return true for {@code <sql id="...">} tags
+     * @param tag 要检查的 XML 标签
+     * @return 对 {@code <sql id="...">} 标签返回 true
      */
     static boolean isSqlToySqlTag(@NotNull XmlTag tag) {
         return "sql".equals(tag.getName()) && tag.getAttribute("id") != null;
     }
 
     /**
-     * Navigation target for one SqlToy XML sqlId definition.
+     * 一个 SqlToy XML sqlId 定义的导航目标。
      *
-     * @param sqlId sqlId value
-     * @param element PSI element used as the navigation destination
-     * @param fileName source XML file name
+     * @param sqlId sqlId 值
+     * @param element 作为导航目标的 PSI 元素
+     * @param fileName 源 XML 文件名
      */
     record SqlIdTarget(
             @NotNull String sqlId,

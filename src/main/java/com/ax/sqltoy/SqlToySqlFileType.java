@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.Icon;
 
 /**
- * File type facade for the embedded SqlToy SQL language.
+ * 嵌入式 SqlToy SQL 语言的文件类型门面。
  *
  * @author ax
  * @date 2026-05-30
@@ -15,21 +15,21 @@ import javax.swing.Icon;
 final class SqlToySqlFileType extends LanguageFileType {
 
     /**
-     * Singleton file type used by the parser definition.
+     * 供解析器定义使用的文件类型单例。
      */
     static final SqlToySqlFileType INSTANCE = new SqlToySqlFileType();
 
     /**
-     * Binds this file type to the SqlToy SQL language.
+     * 将此文件类型绑定到 SqlToy SQL 语言。
      */
     private SqlToySqlFileType() {
         super(SqlToySqlLanguage.INSTANCE);
     }
 
     /**
-     * Returns the file type name.
+     * 返回文件类型名称。
      *
-     * @return file type name
+     * @return 文件类型名称
      */
     @Override
     public @NotNull String getName() {
@@ -37,9 +37,9 @@ final class SqlToySqlFileType extends LanguageFileType {
     }
 
     /**
-     * Returns a short description for UI surfaces.
+     * 返回用于界面展示的简短描述。
      *
-     * @return file type description
+     * @return 文件类型描述
      */
     @Override
     public @NotNull String getDescription() {
@@ -47,9 +47,9 @@ final class SqlToySqlFileType extends LanguageFileType {
     }
 
     /**
-     * Returns a synthetic extension for embedded SQL fragments.
+     * 返回嵌入式 SQL 片段的合成扩展名。
      *
-     * @return default extension
+     * @return 默认扩展名
      */
     @Override
     public @NotNull String getDefaultExtension() {
@@ -57,9 +57,9 @@ final class SqlToySqlFileType extends LanguageFileType {
     }
 
     /**
-     * Returns the icon used for SqlToy SQL fragments.
+     * 返回 SqlToy SQL 片段使用的图标。
      *
-     * @return SQL marker icon
+     * @return SQL 标记图标
      */
     @Override
     public @Nullable Icon getIcon() {

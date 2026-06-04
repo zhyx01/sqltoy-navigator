@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Adds gutter navigation markers between Java sqlId literals and XML SQL definitions.
+ * 在 Java sqlId 字面量和 XML SQL 定义之间添加边栏导航标记。
  *
  * @author ax
  * @date 2026-05-30
@@ -24,31 +24,32 @@ import java.util.List;
 public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerProvider {
 
     /**
-     * Collects navigation markers for both Java and XML PSI elements.
+     * 为 Java 和 XML PSI 元素收集导航标记。
      *
-     * @param element PSI element currently being visited
-     * @param result marker collection to append to
+     * @param element 当前正在访问的 PSI 元素
+     * @param result 用于追加标记的集合
      */
     @Override
     protected void collectNavigationMarkers(
             @NotNull PsiElement element,
             @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result
     ) {
-        // Both directions are handled by one provider because the icon and resolver are shared.
+        // 两个方向共用一个提供器，因为图标和解析器相同。
         collectJavaSqlIdMarker(element, result);
         collectXmlSqlMarker(element, result);
     }
 
     /**
-     * Adds a gutter marker from a Java sqlId literal to XML SQL definitions.
+     * 添加从 Java sqlId 字面量跳转到 XML SQL 定义的边栏标记。
      *
-     * @param element Java PSI element
-     * @param result marker collection to append to
+     * @param element Java PSI 元素
+     * @param result 用于追加标记的集合
      */
     private void collectJavaSqlIdMarker(
             @NotNull PsiElement element,
             @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result
     ) {
+        // 只在字符串内容对应的 Java token 上放图标，避免一个字面量生成多个边栏标记。
         PsiLiteralExpression literalExpression = SqlToyJavaSqlIdResolver.getSqlIdLiteral(element);
         if (literalExpression == null) {
             return;
@@ -59,7 +60,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
             return;
         }
 
-        // Duplicate XML definitions are all exposed as navigation targets.
+        // 重复的 XML 定义都会作为导航目标暴露。
         List<PsiElement> targets = SqlToySqlIdXmlResolver.findTargets(element.getProject(), sqlId)
                 .stream()
                 .map(SqlToySqlIdXmlResolver.SqlIdTarget::element)
@@ -69,6 +70,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
             return;
         }
 
+        // 目标列表非空时才创建图标，避免普通字符串被误显示为可导航 sqlId。
         NavigationGutterIconBuilder<PsiElement> builder = NavigationGutterIconBuilder
                 .create(SqlToyIcons.SQL_MARKER)
                 .setTargets(targets)
@@ -78,15 +80,16 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
     }
 
     /**
-     * Adds a gutter marker from an XML sqlId definition to Java usages.
+     * 添加从 XML sqlId 定义跳转到 Java 使用处的边栏标记。
      *
-     * @param element XML PSI element
-     * @param result marker collection to append to
+     * @param element XML PSI 元素
+     * @param result 用于追加标记的集合
      */
     private void collectXmlSqlMarker(
             @NotNull PsiElement element,
             @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result
     ) {
+        // XML 侧只在属性值 token 上放图标，让图标和 sqlId 文本位置对齐。
         if (!(element instanceof XmlToken xmlToken) || xmlToken.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
             return;
         }
@@ -111,6 +114,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
             return;
         }
 
+        // XML 到 Java 是反向导航，目标是所有引用该 sqlId 的字符串字面量。
         NavigationGutterIconBuilder<PsiElement> builder = NavigationGutterIconBuilder
                 .create(SqlToyIcons.SQL_MARKER)
                 .setTargets(targets)

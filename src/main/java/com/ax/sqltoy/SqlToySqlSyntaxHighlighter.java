@@ -10,14 +10,14 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Maps SqlToy SQL lexer token types to IntelliJ editor color attributes.
+ * 将 SqlToy SQL 词法单元类型映射到 IntelliJ 编辑器颜色属性。
  *
  * @author ax
  * @date 2026-05-30
  */
 public final class SqlToySqlSyntaxHighlighter extends SyntaxHighlighterBase {
 
-    // Theme-backed attributes keep most colors aligned with the current IDE scheme.
+    // 使用主题托管的属性，让大多数颜色跟随当前 IDE 配色方案。
     private static final TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey(
             "SQLTOY_SQL_KEYWORD",
             DefaultLanguageHighlighterColors.KEYWORD
@@ -67,7 +67,7 @@ public final class SqlToySqlSyntaxHighlighter extends SyntaxHighlighterBase {
             HighlighterColors.BAD_CHARACTER
     );
 
-    // IntelliJ expects arrays of attributes for each token type.
+    // IntelliJ 要求每种词法单元类型返回属性数组。
     private static final TextAttributesKey[] KEYWORD_KEYS = pack(KEYWORD);
     private static final TextAttributesKey[] IDENTIFIER_KEYS = pack(IDENTIFIER);
     private static final TextAttributesKey[] FUNCTION_KEYS = pack(FUNCTION);
@@ -83,9 +83,9 @@ public final class SqlToySqlSyntaxHighlighter extends SyntaxHighlighterBase {
     private static final TextAttributesKey[] EMPTY_KEYS = TextAttributesKey.EMPTY_ARRAY;
 
     /**
-     * Creates a lexer for syntax highlighting.
+     * 创建用于语法高亮的词法分析器。
      *
-     * @return fresh SqlToy SQL lexer
+     * @return 新的 SqlToy SQL 词法分析器
      */
     @Override
     public @NotNull Lexer getHighlightingLexer() {
@@ -93,9 +93,9 @@ public final class SqlToySqlSyntaxHighlighter extends SyntaxHighlighterBase {
     }
 
     /**
-     * Returns editor attributes for a lexer token type.
+     * 返回词法单元类型对应的编辑器属性。
      *
-     * @param tokenType token type produced by {@link SqlToySqlLexer}
+     * @param tokenType {@link SqlToySqlLexer} 产生的词法单元类型
      * @return attributes for the token, or an empty array when this plugin should not color it
      */
     @Override

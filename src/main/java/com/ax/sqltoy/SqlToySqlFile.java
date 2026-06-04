@@ -6,7 +6,7 @@ import com.intellij.psi.FileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * PSI file wrapper for injected SqlToy SQL fragments.
+ * 注入式 SqlToy SQL 片段的 PSI 文件包装器。
  *
  * @author ax
  * @date 2026-05-30
@@ -14,18 +14,18 @@ import org.jetbrains.annotations.NotNull;
 final class SqlToySqlFile extends PsiFileBase {
 
     /**
-     * Creates a PSI file bound to the SqlToy SQL language.
+     * 创建绑定到 SqlToy SQL 语言的 PSI 文件。
      *
-     * @param viewProvider file view provider supplied by IntelliJ
+     * @param viewProvider IntelliJ 提供的文件视图提供器
      */
     SqlToySqlFile(@NotNull FileViewProvider viewProvider) {
         super(viewProvider, SqlToySqlLanguage.INSTANCE);
     }
 
     /**
-     * Returns the synthetic file type for embedded SQL fragments.
+     * 返回嵌入式 SQL 片段的合成文件类型。
      *
-     * @return SqlToy SQL file type
+     * @return SqlToy SQL 文件类型
      */
     @Override
     public @NotNull FileType getFileType() {
@@ -33,9 +33,9 @@ final class SqlToySqlFile extends PsiFileBase {
     }
 
     /**
-     * Returns a debug-friendly PSI file name.
+     * 返回便于调试的 PSI 文件名称。
      *
-     * @return PSI file description
+     * @return PSI 文件描述
      */
     @Override
     public String toString() {

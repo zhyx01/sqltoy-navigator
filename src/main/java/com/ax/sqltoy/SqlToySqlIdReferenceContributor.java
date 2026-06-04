@@ -11,12 +11,12 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Registers references on Java string literals.
+ * 在 Java 字符串字面量上注册引用。
  * <p>
- * Example:
+ * 示例：
  * multiLightDao.findByMap(..., "trace_param_fault_moduleId", ...);
  * <p>
- * Ctrl + click on "trace_param_fault_moduleId" can jump to:
+ * 按 Ctrl 并点击 "trace_param_fault_moduleId" 可跳转到：
  * <sql id="trace_param_fault_moduleId">...</sql>
  *
  * @author ax
@@ -25,21 +25,22 @@ import org.jetbrains.annotations.NotNull;
 public final class SqlToySqlIdReferenceContributor extends PsiReferenceContributor {
 
     /**
-     * Registers a reference provider for Java string literals.
+     * 为 Java 字符串字面量注册引用提供器。
      *
-     * @param registrar IntelliJ reference registrar
+     * @param registrar IntelliJ 引用注册器
      */
     @Override
     public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
+        // 先注册到所有 Java 字符串字面量，再在 provider 内用 sqlId 规则过滤候选。
         registrar.registerReferenceProvider(
                 PlatformPatterns.psiElement(PsiLiteralExpression.class),
                 new PsiReferenceProvider() {
                     /**
-                     * Creates sqlId references for eligible Java literal expressions.
+                     * 为符合条件的 Java 字面量表达式创建 sqlId 引用。
                      *
-                     * @param element Java PSI element matched by the pattern
-                     * @param context processing context from IntelliJ
-                     * @return references for the element, or an empty array
+                     * @param element 被模式匹配到的 Java PSI 元素
+                     * @param context IntelliJ 传入的处理上下文
+                     * @return 该元素的引用；没有引用时返回空数组
                      */
                     @Override
                     public PsiReference @NotNull [] getReferencesByElement(
@@ -49,16 +50,17 @@ public final class SqlToySqlIdReferenceContributor extends PsiReferenceContribut
                         PsiLiteralExpression literalExpression = (PsiLiteralExpression) element;
                         Object value = literalExpression.getValue();
 
-                        // Only Java string literals can be SqlToy sqlId references.
+                        // 只有 Java 字符串字面量才能作为 SqlToy sqlId 引用。
                         if (!(value instanceof String sqlId)) {
                             return PsiReference.EMPTY_ARRAY;
                         }
 
-                        // Ignore ordinary strings that cannot be SqlToy sqlId values.
+                        // 忽略不可能是 SqlToy sqlId 的普通字符串。
                         if (!SqlToySqlIdXmlResolver.maybeSqlId(sqlId)) {
                             return PsiReference.EMPTY_ARRAY;
                         }
 
+                        // 返回引用后，IDEA 才能提供 Ctrl+Click、Find Usages 和补全联动。
                         return new PsiReference[]{
                                 new SqlToySqlIdReference(literalExpression, sqlId)
                         };
