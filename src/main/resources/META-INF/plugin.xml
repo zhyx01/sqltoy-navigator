@@ -5,6 +5,10 @@
 
     <description><![CDATA[
         <p>
+            SqlToy Navigator helps developers jump between Java sqlId strings and XML SQL definitions.
+        </p>
+
+        <p>
             <b>SqlToy Navigator</b> 是一款面向 SqlToy ORM 项目的 IntelliJ IDEA 插件，
             用于在 Java 代码中的 <code>sqlId</code> 字符串与 XML 文件中的 SQL 定义之间快速跳转。
         </p>
