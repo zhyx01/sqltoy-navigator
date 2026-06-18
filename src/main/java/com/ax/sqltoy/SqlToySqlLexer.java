@@ -535,6 +535,17 @@ final class SqlToySqlLexer extends LexerBase {
                 return;
             }
 
+            if (justReadTableName) {
+                // INSERT INTO table_name (col1, col2)：进入列名列表，禁用表名上下文。
+                expectingAlias = false;
+                expectingTableAlias = false;
+                expectingParameterName = false;
+                expectingTableName = false;
+                tableContextActive = false;
+                justReadTableName = false;
+                return;
+            }
+
             expectingParameterName = false;
             justReadTableName = false;
             return;
