@@ -6,6 +6,7 @@ import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
@@ -36,6 +37,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
     ) {
         // 两个方向共用一个提供器，因为图标和解析器相同。
         collectJavaSqlIdMarker(element, result);
+        collectJavaSqlIdConstantMarker(element, result);
         collectXmlSqlMarker(element, result);
     }
 
@@ -71,11 +73,41 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
         }
 
         // 目标列表非空时才创建图标，避免普通字符串被误显示为可导航 sqlId。
-        NavigationGutterIconBuilder<PsiElement> builder = NavigationGutterIconBuilder
-                .create(SqlToyIcons.SQL_MARKER)
-                .setTargets(targets)
-                .setTooltipText("Navigate to SqlToy SQL: " + sqlId);
+        NavigationGutterIconBuilder<PsiElement> builder = createSqlNavigationBuilder(targets, sqlId);
 
+        result.add(builder.createLineMarkerInfo(element));
+    }
+
+    /**
+     * 添加从 Java sqlId 常量参数跳转到 XML SQL 定义的边栏标记。
+     *
+     * @param element Java PSI 元素
+     * @param result 用于追加标记的集合
+     */
+    private void collectJavaSqlIdConstantMarker(
+            @NotNull PsiElement element,
+            @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result
+    ) {
+        PsiReferenceExpression constantExpression = SqlToyJavaSqlIdResolver.getSqlIdConstantArgument(element);
+        if (constantExpression == null) {
+            return;
+        }
+
+        String sqlId = SqlToyJavaSqlIdResolver.getSqlIdFromConstantArgument(constantExpression);
+        if (sqlId == null) {
+            return;
+        }
+
+        List<PsiElement> targets = SqlToySqlIdXmlResolver.findTargets(element.getProject(), sqlId)
+                .stream()
+                .map(SqlToySqlIdXmlResolver.SqlIdTarget::element)
+                .toList();
+
+        if (targets.isEmpty()) {
+            return;
+        }
+
+        NavigationGutterIconBuilder<PsiElement> builder = createSqlNavigationBuilder(targets, sqlId);
         result.add(builder.createLineMarkerInfo(element));
     }
 
@@ -121,5 +153,22 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
                 .setTooltipText("Navigate to Java SqlToy sqlId: " + sqlId);
 
         result.add(builder.createLineMarkerInfo(element));
+    }
+
+    /**
+     * 创建从 Java sqlId 跳转到 XML SQL 定义的边栏图标构造器。
+     *
+     * @param targets XML SQL 定义目标
+     * @param sqlId SqlToy sqlId
+     * @return 边栏图标构造器
+     */
+    private NavigationGutterIconBuilder<PsiElement> createSqlNavigationBuilder(
+            @NotNull List<PsiElement> targets,
+            @NotNull String sqlId
+    ) {
+        return NavigationGutterIconBuilder
+                .create(SqlToyIcons.SQL_MARKER)
+                .setTargets(targets)
+                .setTooltipText("Navigate to SqlToy SQL: " + sqlId);
     }
 }

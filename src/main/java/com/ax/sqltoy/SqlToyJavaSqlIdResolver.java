@@ -8,11 +8,17 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -26,6 +32,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 从 Java 字符串字面量中解析 SqlToy sqlId。
@@ -40,6 +47,16 @@ final class SqlToyJavaSqlIdResolver {
      */
     private static final Key<CachedValue<Map<String, List<PsiElement>>>> JAVA_LITERAL_TARGETS_CACHE =
             Key.create("SqlToyJavaLiteralTargetsCache");
+
+    /**
+     * 第一个参数为 SqlToy sqlId 的 DAO 方法名称。
+     */
+    private static final Set<String> SQL_ID_FIRST_ARGUMENT_METHOD_NAMES = Set.of(
+            "find",
+            "findOne",
+            "findByMap",
+            "getSingleValue"
+    );
 
     /**
      * 工具类，不需要创建实例。
@@ -63,6 +80,24 @@ final class SqlToyJavaSqlIdResolver {
     }
 
     /**
+     * 根据 Java PSI 元素返回 SQL 方法首参中的 sqlId 常量引用。
+     *
+     * @param element 正在检查的 PSI 元素
+     * @return 匹配的常量引用表达式；不符合条件时返回 null
+     */
+    static PsiReferenceExpression getSqlIdConstantArgument(@NotNull PsiElement element) {
+        if (!(element.getParent() instanceof PsiReferenceExpression referenceExpression)) {
+            return null;
+        }
+
+        if (referenceExpression.getReferenceNameElement() != element) {
+            return null;
+        }
+
+        return getSqlIdFromConstantArgument(referenceExpression) != null ? referenceExpression : null;
+    }
+
+    /**
      * 从 Java 字面量中提取 SqlToy sqlId。
      *
      * @param literalExpression Java 字面量表达式
@@ -77,6 +112,33 @@ final class SqlToyJavaSqlIdResolver {
 
         // PsiLiteralExpression#getValue 会处理转义字符，后续只需要校验值是否像 sqlId。
         return SqlToySqlIdXmlResolver.maybeSqlId(sqlId) ? sqlId : null;
+    }
+
+    /**
+     * 从 SQL 方法首参中的 Java 常量引用中解析 SqlToy sqlId。
+     *
+     * @param referenceExpression Java 常量引用表达式
+     * @return sqlId 值；不是可支持的常量参数时返回 null
+     */
+    static String getSqlIdFromConstantArgument(@NotNull PsiReferenceExpression referenceExpression) {
+        if (!isFirstSqlIdArgument(referenceExpression)) {
+            return null;
+        }
+
+        PsiElement resolvedElement = referenceExpression.resolve();
+        if (!(resolvedElement instanceof PsiField field)) {
+            return null;
+        }
+
+        if (!field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.FINAL)) {
+            return null;
+        }
+
+        if (!(field.getInitializer() instanceof PsiLiteralExpression literalExpression)) {
+            return null;
+        }
+
+        return getSqlId(literalExpression);
     }
 
     /**
@@ -113,6 +175,30 @@ final class SqlToyJavaSqlIdResolver {
      */
     static TextRange getStringContentTextRange(@NotNull PsiLiteralExpression literalExpression) {
         return getStringContentRange(literalExpression).shiftRight(literalExpression.getTextRange().getStartOffset());
+    }
+
+    /**
+     * 检查参数是否位于已支持的 SQL 方法首参位置。
+     *
+     * @param expression 要检查的 Java 表达式
+     * @return 是 SQL 方法第一个参数时返回 true
+     */
+    private static boolean isFirstSqlIdArgument(@NotNull PsiExpression expression) {
+        if (!(expression.getParent() instanceof PsiExpressionList expressionList)) {
+            return false;
+        }
+
+        if (!(expressionList.getParent() instanceof PsiMethodCallExpression methodCallExpression)) {
+            return false;
+        }
+
+        PsiExpression[] expressions = expressionList.getExpressions();
+        if (expressions.length == 0 || expressions[0] != expression) {
+            return false;
+        }
+
+        String methodName = methodCallExpression.getMethodExpression().getReferenceName();
+        return methodName != null && SQL_ID_FIRST_ARGUMENT_METHOD_NAMES.contains(methodName);
     }
 
     /**
