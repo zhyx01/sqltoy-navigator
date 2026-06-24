@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 在 Java sqlId 字面量和 XML SQL 定义之间添加边栏导航标记。
@@ -53,12 +54,12 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
     ) {
         // 只在字符串内容对应的 Java token 上放图标，避免一个字面量生成多个边栏标记。
         PsiLiteralExpression literalExpression = SqlToyJavaSqlIdResolver.getSqlIdLiteral(element);
-        if (literalExpression == null) {
+        if (Objects.isNull(literalExpression)) {
             return;
         }
 
         String sqlId = SqlToyJavaSqlIdResolver.getSqlId(literalExpression);
-        if (sqlId == null) {
+        if (Objects.isNull(sqlId)) {
             return;
         }
 
@@ -89,12 +90,12 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
             @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result
     ) {
         PsiReferenceExpression constantExpression = SqlToyJavaSqlIdResolver.getSqlIdConstantArgument(element);
-        if (constantExpression == null) {
+        if (Objects.isNull(constantExpression)) {
             return;
         }
 
         String sqlId = SqlToyJavaSqlIdResolver.getSqlIdFromConstantArgument(constantExpression);
-        if (sqlId == null) {
+        if (Objects.isNull(sqlId)) {
             return;
         }
 
@@ -131,12 +132,12 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
         }
 
         XmlTag tag = SqlToySqlIdXmlResolver.getSqlTagForIdValue(valueElement);
-        if (tag == null) {
+        if (Objects.isNull(tag)) {
             return;
         }
 
         String sqlId = SqlToySqlIdXmlResolver.getSqlId(tag);
-        if (sqlId == null || !SqlToySqlIdXmlResolver.maybeSqlId(sqlId)) {
+        if (Objects.isNull(sqlId) || !SqlToySqlIdXmlResolver.maybeSqlId(sqlId)) {
             return;
         }
 
@@ -148,7 +149,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
 
         // XML 到 Java 是反向导航，目标是所有引用该 sqlId 的字符串字面量。
         NavigationGutterIconBuilder<PsiElement> builder = NavigationGutterIconBuilder
-                .create(SqlToyIcons.SQL_MARKER)
+                .create(SqlToyIcons.JAVA_MARKER)
                 .setTargets(targets)
                 .setTooltipText("Navigate to Java SqlToy sqlId: " + sqlId);
 

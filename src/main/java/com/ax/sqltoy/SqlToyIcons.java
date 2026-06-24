@@ -17,6 +17,8 @@ final class SqlToyIcons {
      */
     static final Icon SQL_MARKER = IconLoader.getIcon("/icons/sqlToyMarker.svg", SqlToyIcons.class);
 
+    static final Icon JAVA_MARKER = IconLoader.getIcon("/icons/javaMarker.svg", SqlToyIcons.class);
+
     /**
      * 工具类，不需要创建实例。
      */
