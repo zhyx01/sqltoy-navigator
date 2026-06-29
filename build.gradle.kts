@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.ax.sqltoy"
-version = "1.0.5"
+version = "1.0.6"
 
 dependencies {
     intellijPlatform {
@@ -21,13 +21,9 @@ intellijPlatform {
 
         changeNotes = """
             Change version :
-                1. Add syntax highlighting for INSERT statements.
-                2. Add constant definition for SQL jump identifier.
-                3. Change icon.
+                1. Check whether there are duplicate sqlId in the current XML.
                 
-                1. 添加 INSERT 语句的语法高亮
-                2. 添加常量定义 SQL 跳转标识
-                3. 变更图标
+                1. 检验当前 xml 中是否存在重复定义的 sqlId
         """.trimIndent()
     }
 }

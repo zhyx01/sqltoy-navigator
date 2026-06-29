@@ -18,6 +18,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
+import java.util.Objects;
 
 /**
  * 为 SqlToy SQL 定义添加 XML 侧标注。
@@ -40,11 +41,12 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
      * 为 SqlToy SQL 标签内的 XML 文本节点添加 SQL 词法高亮。
      *
      * @param element 当前正在标注的 XML PSI 元素
-     * @param holder 用于添加文本属性的标注容器
+     * @param holder  用于添加文本属性的标注容器
      */
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
         // 同一个 annotator 同时负责 sqlId 未引用提示和 SQL 正文语法高亮。
+        annotateDuplicateXmlSqlId(element, holder);
         annotateUnusedXmlSqlId(element, holder);
 
         if (!(element instanceof XmlText xmlText)) {
@@ -64,17 +66,43 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
         Lexer lexer = HIGHLIGHTER.getHighlightingLexer();
         lexer.start(text, sqlTextRange.getStartOffset(), sqlTextRange.getEndOffset(), 0);
 
-        while (lexer.getTokenType() != null) {
+        while (Objects.nonNull(lexer.getTokenType())) {
             highlightToken(xmlText, holder, lexer);
             lexer.advance();
         }
     }
 
     /**
+     * 将当前 XML 文件内重复的 XML SQL id 标记为错误。
+     *
+     * @param element 当前正在标注的 XML PSI 元素
+     * @param holder  用于添加错误标注的容器
+     */
+    private void annotateDuplicateXmlSqlId(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+        if (!(element instanceof XmlToken xmlToken) || xmlToken.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+            return;
+        }
+
+        if (!(xmlToken.getParent() instanceof XmlAttributeValue valueElement)) {
+            return;
+        }
+
+        var tag = SqlToySqlIdXmlResolver.getSqlTagForIdValue(valueElement);
+        if (Objects.isNull(tag) || !SqlToySqlIdXmlResolver.hasDuplicateSqlIdInFile(tag)) {
+            return;
+        }
+
+        String sqlId = SqlToySqlIdXmlResolver.getSqlId(tag);
+        holder.newAnnotation(HighlightSeverity.ERROR, "Duplicate sqlId in this XML file: " + sqlId)
+                .range(element.getTextRange())
+                .create();
+    }
+
+    /**
      * 将没有被 Java 代码引用的 XML SQL id 置灰。
      *
      * @param element 当前正在标注的 XML PSI 元素
-     * @param holder 用于添加文本属性的标注容器
+     * @param holder  用于添加文本属性的标注容器
      */
     private void annotateUnusedXmlSqlId(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
         if (!(element instanceof XmlToken xmlToken) || xmlToken.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
@@ -86,12 +114,12 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
         }
 
         var tag = SqlToySqlIdXmlResolver.getSqlTagForIdValue(valueElement);
-        if (tag == null) {
+        if (Objects.isNull(tag)) {
             return;
         }
 
         String sqlId = SqlToySqlIdXmlResolver.getSqlId(tag);
-        if (sqlId == null || !SqlToySqlIdXmlResolver.maybeSqlId(sqlId)) {
+        if (Objects.isNull(sqlId) || !SqlToySqlIdXmlResolver.maybeSqlId(sqlId)) {
             return;
         }
 
@@ -114,8 +142,8 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
      * 为单个词法单元应用颜色标注。
      *
      * @param xmlText 拥有该词法单元的 XML 文本宿主
-     * @param holder 用于添加高亮的标注容器
-     * @param lexer 已定位到待高亮词法单元的词法分析器
+     * @param holder  用于添加高亮的标注容器
+     * @param lexer   已定位到待高亮词法单元的词法分析器
      */
     private static void highlightToken(
             @NotNull XmlText xmlText,

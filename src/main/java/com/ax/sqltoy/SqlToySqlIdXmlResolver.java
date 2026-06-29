@@ -24,7 +24,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -56,6 +58,12 @@ final class SqlToySqlIdXmlResolver {
             Key.create("SqlToyXmlTargetsCache");
 
     /**
+     * 单个 XML 文件内按大小写不敏感 sqlId 分组缓存的 XML 定义。
+     */
+    private static final Key<CachedValue<Map<String, List<SqlIdTarget>>>> XML_NORMALIZED_TARGETS_CACHE =
+            Key.create("SqlToyXmlNormalizedTargetsCache");
+
+    /**
      * 工具类，不需要创建实例。
      */
     private SqlToySqlIdXmlResolver() {
@@ -68,7 +76,7 @@ final class SqlToySqlIdXmlResolver {
      * @return 值是合理 sqlId 候选时返回 true
      */
     static boolean maybeSqlId(String value) {
-        if (value == null) {
+        if (Objects.isNull(value)) {
             return false;
         }
 
@@ -84,7 +92,7 @@ final class SqlToySqlIdXmlResolver {
      * 查找指定 sqlId 的 XML 定义。
      *
      * @param project 当前项目
-     * @param sqlId 要查找的 sqlId
+     * @param sqlId   要查找的 sqlId
      * @return 匹配的 XML 目标
      */
     static List<SqlIdTarget> findTargets(@NotNull Project project, @NotNull String sqlId) {
@@ -130,13 +138,13 @@ final class SqlToySqlIdXmlResolver {
      * 返回包含 sqlId 可索引片段的 XML 文件。
      *
      * @param project 当前项目
-     * @param sqlId 要查找的 sqlId
+     * @param sqlId   要查找的 sqlId
      * @return 候选 XML PSI 文件
      */
     private static List<XmlFile> findCandidateXmlFiles(@NotNull Project project, @NotNull String sqlId) {
         // 用可索引片段先缩小 XML 文件范围，再在候选文件里精确解析 <sql id="...">。
         String searchWord = getIndexSearchWord(sqlId);
-        if (searchWord == null) {
+        if (Objects.isNull(searchWord)) {
             // 没有可索引片段时只能遍历项目内所有 XML 文件。
             return findAllXmlFiles(project);
         }
@@ -186,7 +194,7 @@ final class SqlToySqlIdXmlResolver {
     /**
      * 返回单个 XML 文件内按 sqlId 分组缓存的 XML 定义。
      *
-     * @param xmlFile 要检查的 XML 文件
+     * @param xmlFile  要检查的 XML 文件
      * @param fileName 源 XML 文件名
      * @return sqlId 到 XML 目标列表的映射
      */
@@ -204,9 +212,83 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
+     * 检查指定 XML SQL 标签的 sqlId 是否在当前 XML 文件内重复。
+     *
+     * @param tag 要检查的 XML SQL 标签
+     * @return 当前文件存在大小写不敏感的重复 sqlId 时返回 true
+     */
+    static boolean hasDuplicateSqlIdInFile(@NotNull XmlTag tag) {
+        String sqlId = getSqlId(tag);
+        if (Objects.isNull(sqlId)) {
+            return false;
+        }
+
+        if (!(tag.getContainingFile() instanceof XmlFile xmlFile)) {
+            return false;
+        }
+
+        List<SqlIdTarget> targets = getTargetsByNormalizedId(xmlFile, xmlFile.getName())
+                .get(normalizeSqlId(sqlId));
+        return targets != null && targets.size() > 1;
+    }
+
+    /**
+     * 返回单个 XML 文件内按大小写不敏感 sqlId 分组缓存的 XML 定义。
+     *
+     * @param xmlFile  要检查的 XML 文件
+     * @param fileName 源 XML 文件名
+     * @return 规范化 sqlId 到 XML 目标列表的映射
+     */
+    private static Map<String, List<SqlIdTarget>> getTargetsByNormalizedId(
+            @NotNull XmlFile xmlFile,
+            @NotNull String fileName
+    ) {
+        return CachedValuesManager.getManager(xmlFile.getProject()).getCachedValue(
+                xmlFile,
+                XML_NORMALIZED_TARGETS_CACHE,
+                () -> CachedValueProvider.Result.create(
+                        groupTargetsByNormalizedId(getTargetsById(xmlFile, fileName)),
+                        xmlFile
+                ),
+                false
+        );
+    }
+
+    /**
+     * 将精确 sqlId 分组转换为大小写不敏感分组。
+     *
+     * @param targetsById 精确 sqlId 分组
+     * @return 规范化 sqlId 到 XML 目标列表的映射
+     */
+    private static Map<String, List<SqlIdTarget>> groupTargetsByNormalizedId(
+            @NotNull Map<String, List<SqlIdTarget>> targetsById
+    ) {
+        Map<String, List<SqlIdTarget>> targetsByNormalizedId = new HashMap<>();
+        for (List<SqlIdTarget> targets : targetsById.values()) {
+            for (SqlIdTarget target : targets) {
+                targetsByNormalizedId
+                        .computeIfAbsent(normalizeSqlId(target.sqlId()), ignored -> new ArrayList<>())
+                        .add(target);
+            }
+        }
+
+        return targetsByNormalizedId;
+    }
+
+    /**
+     * 对 sqlId 做大小写不敏感比较用的规范化处理。
+     *
+     * @param sqlId 原始 sqlId
+     * @return 规范化后的 sqlId
+     */
+    private static String normalizeSqlId(@NotNull String sqlId) {
+        return sqlId.toLowerCase(Locale.ROOT);
+    }
+
+    /**
      * 在单个 XML 文件中查找全部 SqlToy SQL 定义，并按 sqlId 分组。
      *
-     * @param xmlFile 要检查的 XML 文件
+     * @param xmlFile  要检查的 XML 文件
      * @param fileName 源 XML 文件名
      * @return sqlId 到 XML 目标列表的映射
      */
@@ -216,7 +298,7 @@ final class SqlToySqlIdXmlResolver {
     ) {
         List<SqlIdTarget> result = new ArrayList<>();
         XmlTag rootTag = xmlFile.getRootTag();
-        if (rootTag == null) {
+        if (Objects.isNull(rootTag)) {
             // 非完整 XML 或空文件没有根标签，直接返回空映射。
             return Map.of();
         }
@@ -254,9 +336,9 @@ final class SqlToySqlIdXmlResolver {
     /**
      * 递归收集 XML 标签下的 sqlId 定义。
      *
-     * @param tag 要检查的 XML 标签
+     * @param tag      要检查的 XML 标签
      * @param fileName 源 XML 文件名
-     * @param result 用于追加目标的列表
+     * @param result   用于追加目标的列表
      */
     private static void collectSqlIds(
             @NotNull XmlTag tag,
@@ -338,8 +420,8 @@ final class SqlToySqlIdXmlResolver {
     /**
      * 一个 SqlToy XML sqlId 定义的导航目标。
      *
-     * @param sqlId sqlId 值
-     * @param element 作为导航目标的 PSI 元素
+     * @param sqlId    sqlId 值
+     * @param element  作为导航目标的 PSI 元素
      * @param fileName 源 XML 文件名
      */
     record SqlIdTarget(
