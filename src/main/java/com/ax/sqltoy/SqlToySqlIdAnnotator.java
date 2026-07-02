@@ -5,11 +5,13 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
+import java.util.List;
 
 /**
  * 为能解析到 XML 定义的 Java sqlId 字符串添加可视下划线。
@@ -20,6 +22,8 @@ import java.awt.Color;
 public final class SqlToySqlIdAnnotator implements Annotator {
 
     private static final Color UNDERLINE_COLOR = new Color(104, 168, 113);
+    private static final int TOOLTIP_WIDTH = 960;
+    private static final String TOOLTIP_MAX_HEIGHT = "60vh";
 
     /**
      * 标注存在匹配 XML 目标的 Java sqlId 字面量。
@@ -36,14 +40,21 @@ public final class SqlToySqlIdAnnotator implements Annotator {
 
         String sqlId = SqlToyJavaSqlIdResolver.getSqlId(literalExpression);
         // 不给未解析的候选值加下划线；它们可能只是普通字符串。
-        if (sqlId == null || SqlToySqlIdXmlResolver.findTargets(element.getProject(), sqlId).isEmpty()) {
+        if (sqlId == null) {
             return;
         }
 
-        holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+        List<SqlToySqlIdXmlResolver.SqlIdTarget> targets =
+                SqlToySqlIdXmlResolver.findTargets(element.getProject(), sqlId);
+        if (targets.isEmpty()) {
+            return;
+        }
+
+        var builder = holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                 .range(SqlToyJavaSqlIdResolver.getStringContentTextRange(literalExpression))
-                .enforcedTextAttributes(createUnderlineAttributes())
-                .create();
+                .enforcedTextAttributes(createUnderlineAttributes());
+        builder = builder.tooltip(createSqlTooltip(targets.get(0).sqlText()));
+        builder.create();
     }
 
     /**
@@ -56,5 +67,26 @@ public final class SqlToySqlIdAnnotator implements Annotator {
         attributes.setEffectColor(UNDERLINE_COLOR);
         attributes.setEffectType(EffectType.LINE_UNDERSCORE);
         return attributes;
+    }
+
+    /**
+     * 创建用于悬浮提示的 SQL 纯文本内容。
+     *
+     * @param sqlText SQL 纯文本
+     * @return IDEA tooltip HTML
+     */
+    private String createSqlTooltip(@NotNull String sqlText) {
+        return "<html><body>"
+                + "<div style='"
+                + "width:" + TOOLTIP_WIDTH + "px;"
+                + "max-height:" + TOOLTIP_MAX_HEIGHT + ";"
+                + "overflow-y:auto;"
+                + "overflow-x:auto;"
+                + "'>"
+                + "<pre style='margin:0;white-space:pre-wrap;word-break:break-word;'>"
+                + StringUtil.escapeXmlEntities(sqlText)
+                + "</pre>"
+                + "</div>"
+                + "</body></html>";
     }
 }

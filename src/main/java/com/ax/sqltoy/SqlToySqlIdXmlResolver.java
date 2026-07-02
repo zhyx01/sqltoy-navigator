@@ -4,6 +4,7 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -18,6 +19,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -352,7 +354,7 @@ final class SqlToySqlIdXmlResolver {
             // 尽量导航到属性值元素，使光标落在 id 文本上。
             PsiElement navigationTarget = valueElement != null ? valueElement : idAttribute;
 
-            result.add(new SqlIdTarget(sqlId, navigationTarget, fileName));
+            result.add(new SqlIdTarget(sqlId, navigationTarget, fileName, getSqlText(tag)));
         }
 
         for (XmlTag subTag : tag.getSubTags()) {
@@ -418,16 +420,65 @@ final class SqlToySqlIdXmlResolver {
     }
 
     /**
+     * 提取 SQL 标签中的纯文本 SQL。
+     *
+     * @param tag SqlToy SQL 标签
+     * @return 去除外层空白和 CDATA 包装后的 SQL 文本
+     */
+    private static String getSqlText(@NotNull XmlTag tag) {
+        String text = collectSqlText(tag);
+        TextRange textRange = SqlToyXmlSqlTextRanges.getSqlTextRange(text);
+        if (textRange.isEmpty()) {
+            return "";
+        }
+
+        return textRange.substring(text);
+    }
+
+    /**
+     * 递归收集 XML 标签中的文本节点，排除 value 等 XML 包装标签本身。
+     *
+     * @param tag SqlToy SQL 标签
+     * @return 只包含 XML 文本节点的内容
+     */
+    private static String collectSqlText(@NotNull XmlTag tag) {
+        StringBuilder result = new StringBuilder();
+        appendSqlText(tag, result);
+        return result.toString();
+    }
+
+    /**
+     * 按 PSI 子节点顺序收集 SQL 文本，避免把 XML 标签名展示到悬浮提示中。
+     *
+     * @param tag    当前 XML 标签
+     * @param result 文本收集结果
+     */
+    private static void appendSqlText(@NotNull XmlTag tag, @NotNull StringBuilder result) {
+        PsiElement child = tag.getFirstChild();
+        while (child != null) {
+            if (child instanceof XmlText xmlText) {
+                result.append(xmlText.getText());
+            } else if (child instanceof XmlTag subTag) {
+                appendSqlText(subTag, result);
+            }
+
+            child = child.getNextSibling();
+        }
+    }
+
+    /**
      * 一个 SqlToy XML sqlId 定义的导航目标。
      *
      * @param sqlId    sqlId 值
      * @param element  作为导航目标的 PSI 元素
      * @param fileName 源 XML 文件名
+     * @param sqlText  SQL 纯文本内容
      */
     record SqlIdTarget(
             @NotNull String sqlId,
             @NotNull PsiElement element,
-            @NotNull String fileName
+            @NotNull String fileName,
+            @NotNull String sqlText
     ) {
     }
 }
