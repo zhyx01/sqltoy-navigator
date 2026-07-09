@@ -57,6 +57,9 @@
         <psi.referenceContributor
                 language="JAVA"
                 implementation="com.ax.sqltoy.SqlToySqlIdReferenceContributor"/>
+        <psi.referenceContributor
+                language="XML"
+                implementation="com.ax.sqltoy.SqlToySqlIncludeReferenceContributor"/>
         <annotator
                 language="JAVA"
                 implementationClass="com.ax.sqltoy.SqlToySqlIdAnnotator"/>

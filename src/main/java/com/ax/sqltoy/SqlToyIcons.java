@@ -20,6 +20,11 @@ final class SqlToyIcons {
     static final Icon JAVA_MARKER = IconLoader.getIcon("/icons/javaMarker.svg", SqlToyIcons.class);
 
     /**
+     * 用于 XML include 引用关系的边栏图标。
+     */
+    static final Icon JUMP_MARKER = IconLoader.getIcon("/icons/jump.svg", SqlToyIcons.class);
+
+    /**
      * 工具类，不需要创建实例。
      */
     private SqlToyIcons() {

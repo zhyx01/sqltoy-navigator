@@ -151,6 +151,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
         NavigationGutterIconBuilder<PsiElement> builder = NavigationGutterIconBuilder
                 .create(SqlToyIcons.JAVA_MARKER)
                 .setTargets(targets)
+                .setNamer(target -> createNavigationTargetName(sqlId, target))
                 .setTooltipText("Navigate to Java SqlToy sqlId: " + sqlId);
 
         result.add(builder.createLineMarkerInfo(element));
@@ -170,6 +171,23 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
         return NavigationGutterIconBuilder
                 .create(SqlToyIcons.SQL_MARKER)
                 .setTargets(targets)
+                .setNamer(target -> createNavigationTargetName(sqlId, target))
                 .setTooltipText("Navigate to SqlToy SQL: " + sqlId);
     }
+
+    /**
+     * 创建多目标弹窗中的候选文案。
+     *
+     * @param sqlId  当前导航关系中的 sqlId
+     * @param target 候选 PSI 目标
+     * @return sqlId 和目标行号
+     */
+    private String createNavigationTargetName(@NotNull String sqlId, PsiElement target) {
+        if (Objects.isNull(target)) {
+            return sqlId + " : line -";
+        }
+
+        return new SqlToyNavigationTarget(sqlId, target).getDisplayText();
+    }
+
 }

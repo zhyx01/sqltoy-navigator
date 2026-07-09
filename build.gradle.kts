@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.ax.sqltoy"
-version = "1.0.6"
+version = "1.0.7"
 
 dependencies {
     intellijPlatform {
@@ -21,11 +21,10 @@ intellijPlatform {
 
         changeNotes = """
             Change version :
-                1. Check whether there are duplicate sqlId in the current XML.
-                2. Display the SQL statement when hovering the mouse over the sqlId.
+                1. Add navigation for sqlId references in XML files.
                 
-                1. 检验当前 xml 中是否存在重复定义的 sqlId
-                2. 鼠标悬浮在 sqlId 上时，显示 sql 语句
+                
+                1. 添加 xml 文件中引用 sqlId 的跳转
         """.trimIndent()
     }
 }

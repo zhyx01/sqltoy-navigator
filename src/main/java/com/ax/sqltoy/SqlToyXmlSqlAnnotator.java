@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
@@ -18,6 +19,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -35,7 +37,11 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
 
     private static final Color FUNCTION_COLOR = new Color(86, 156, 214);
     private static final Color PARAMETER_COLOR = new Color(220, 220, 120);
+    private static final Color INCLUDE_SQL_ID_COLOR = new Color(78, 201, 176);
     private static final Color UNUSED_SQL_ID_COLOR = new Color(128, 128, 128);
+
+    private final SqlToySqlIncludeParser includeParser = new SqlToySqlIncludeParser();
+    private final SqlToySqlIncludeResolver includeResolver = new SqlToySqlIncludeResolver();
 
     /**
      * 为 SqlToy SQL 标签内的 XML 文本节点添加 SQL 词法高亮。
@@ -48,6 +54,7 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
         // 同一个 annotator 同时负责 sqlId 未引用提示和 SQL 正文语法高亮。
         annotateDuplicateXmlSqlId(element, holder);
         annotateUnusedXmlSqlId(element, holder);
+        annotateIncludedXmlSqlId(element, holder);
 
         if (!(element instanceof XmlText xmlText)) {
             return;
@@ -70,6 +77,8 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
             highlightToken(xmlText, holder, lexer);
             lexer.advance();
         }
+
+        annotateSqlIncludes(xmlText, holder);
     }
 
     /**
@@ -128,7 +137,8 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
             return;
         }
 
-        if (!SqlToyJavaSqlIdResolver.findLiteralTargets(element.getProject(), sqlId).isEmpty()) {
+        if (!SqlToyJavaSqlIdResolver.findLiteralTargets(element.getProject(), sqlId).isEmpty()
+                || !includeResolver.findIncludeTargets(element.getProject(), sqlId).isEmpty()) {
             return;
         }
 
@@ -175,6 +185,90 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
             builder.textAttributes(attributes[0]);
         }
         builder.create();
+    }
+
+    /**
+     * 为 @include("sqlId") 中的 sqlId 文本增加独立颜色标识。
+     *
+     * @param xmlText XML SQL 文本节点
+     * @param holder  用于添加高亮的标注容器
+     */
+    private void annotateSqlIncludes(@NotNull XmlText xmlText, @NotNull AnnotationHolder holder) {
+        for (SqlToySqlInclude include : includeParser.findIncludes(xmlText)) {
+            TextRange includeRange = include.sqlIdRangeInElement()
+                    .shiftRight(xmlText.getTextRange().getStartOffset());
+
+            List<PsiElement> targets = SqlToySqlIdXmlResolver.findTargets(xmlText.getProject(), include.sqlId())
+                    .stream()
+                    .map(SqlToySqlIdXmlResolver.SqlIdTarget::element)
+                    .toList();
+
+            var builder = holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                    .range(includeRange)
+                    .enforcedTextAttributes(createIncludeSqlIdAttributes());
+            if (!targets.isEmpty()) {
+                builder.gutterIconRenderer(new SqlToyNavigationGutterIconRenderer(
+                        SqlToyIcons.JUMP_MARKER,
+                        "Navigate to XML SqlToy SQL: " + include.sqlId(),
+                        include.sqlId(),
+                        targets
+                ));
+            }
+            builder.create();
+        }
+    }
+
+    /**
+     * 为被 XML include 引用的 XML SQL id 添加同款颜色、下划线和跳转图标。
+     *
+     * @param element 当前正在标注的 XML PSI 元素
+     * @param holder  用于添加高亮的标注容器
+     */
+    private void annotateIncludedXmlSqlId(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+        if (!(element instanceof XmlToken xmlToken) || xmlToken.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+            return;
+        }
+
+        if (!(xmlToken.getParent() instanceof XmlAttributeValue valueElement)) {
+            return;
+        }
+
+        var tag = SqlToySqlIdXmlResolver.getSqlTagForIdValue(valueElement);
+        if (Objects.isNull(tag)) {
+            return;
+        }
+
+        String sqlId = SqlToySqlIdXmlResolver.getSqlId(tag);
+        if (Objects.isNull(sqlId) || !SqlToySqlIdXmlResolver.maybeSqlId(sqlId)) {
+            return;
+        }
+
+        List<SqlToyNavigationTarget> targets = includeResolver.findIncludeNavigationTargets(element.getProject(), sqlId);
+        if (targets.isEmpty()) {
+            return;
+        }
+
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                .range(element.getTextRange())
+                .enforcedTextAttributes(createIncludeSqlIdAttributes())
+                .gutterIconRenderer(new SqlToyNavigationGutterIconRenderer(
+                        SqlToyIcons.JUMP_MARKER,
+                        "Navigate to XML SqlToy include: " + sqlId,
+                        targets
+                ))
+                .create();
+    }
+
+    /**
+     * 构建 include sqlId 使用的颜色和下划线标识。
+     *
+     * @return include sqlId 文本属性
+     */
+    private static TextAttributes createIncludeSqlIdAttributes() {
+        TextAttributes attributes = createForegroundAttributes(INCLUDE_SQL_ID_COLOR);
+        attributes.setEffectColor(INCLUDE_SQL_ID_COLOR);
+        attributes.setEffectType(EffectType.LINE_UNDERSCORE);
+        return attributes;
     }
 
     /**
