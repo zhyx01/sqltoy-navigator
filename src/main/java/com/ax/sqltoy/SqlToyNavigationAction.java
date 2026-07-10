@@ -3,11 +3,13 @@ package com.ax.sqltoy;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -114,31 +116,32 @@ final class SqlToyNavigationAction extends AnAction {
             @NotNull AnActionEvent event,
             @NotNull List<SqlToyNavigationTarget> targets
     ) {
+        List<SqlToyNavigationPopupItem> popupItems = createPopupItems(targets);
         ListPopup popup = JBPopupFactory.getInstance().createListPopup(
-                new BaseListPopupStep<>(title, targets) {
+                new BaseListPopupStep<>(title, popupItems) {
                     @Override
-                    public @NotNull String getTextFor(SqlToyNavigationTarget value) {
+                    public @NotNull String getTextFor(SqlToyNavigationPopupItem value) {
                         return value.getDisplayText();
                     }
 
                     @Override
-                    public Icon getIconFor(SqlToyNavigationTarget value) {
+                    public Icon getIconFor(SqlToyNavigationPopupItem value) {
                         return value.getIcon();
                     }
 
                     @Override
-                    public ListSeparator getSeparatorAbove(SqlToyNavigationTarget value) {
-                        int index = targets.indexOf(value);
+                    public ListSeparator getSeparatorAbove(SqlToyNavigationPopupItem value) {
+                        int index = popupItems.indexOf(value);
                         if (index <= 0) {
                             return null;
                         }
 
-                        SqlToyNavigationTarget previous = targets.get(index - 1);
-                        return isSameFile(previous, value) ? null : new ListSeparator("");
+                        SqlToyNavigationPopupItem previous = popupItems.get(index - 1);
+                        return previous.isSameFile(value) ? null : new ListSeparator("");
                     }
 
                     @Override
-                    public PopupStep<?> onChosen(SqlToyNavigationTarget selectedValue, boolean finalChoice) {
+                    public PopupStep<?> onChosen(SqlToyNavigationPopupItem selectedValue, boolean finalChoice) {
                         return doFinalStep(selectedValue::navigate);
                     }
                 }
@@ -152,6 +155,21 @@ final class SqlToyNavigationAction extends AnAction {
         }
 
         popup.showInBestPositionFor(event.getDataContext());
+    }
+
+    /**
+     * 在读操作中预先生成弹窗展示项，避免 Swing 渲染阶段读取 PSI。
+     *
+     * @param targets 可导航候选目标
+     * @return 弹窗展示项
+     */
+    @NotNull
+    private List<SqlToyNavigationPopupItem> createPopupItems(@NotNull List<SqlToyNavigationTarget> targets) {
+        return ApplicationManager.getApplication().runReadAction(
+                (Computable<List<SqlToyNavigationPopupItem>>) () -> targets.stream()
+                        .map(SqlToyNavigationPopupItem::new)
+                        .toList()
+        );
     }
 
     /**
@@ -182,20 +200,6 @@ final class SqlToyNavigationAction extends AnAction {
     @Nullable
     private PsiFile getCurrentFile(@NotNull AnActionEvent event) {
         return event.getData(CommonDataKeys.PSI_FILE);
-    }
-
-    /**
-     * 判断两个导航目标是否属于同一个文件。
-     *
-     * @param first  第一个候选
-     * @param second 第二个候选
-     * @return 属于同一个文件时返回 true
-     */
-    private boolean isSameFile(
-            @NotNull SqlToyNavigationTarget first,
-            @NotNull SqlToyNavigationTarget second
-    ) {
-        return isSameFile(first.getContainingFile(), second.getContainingFile());
     }
 
     /**
