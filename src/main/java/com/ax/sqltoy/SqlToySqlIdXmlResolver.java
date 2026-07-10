@@ -42,7 +42,7 @@ final class SqlToySqlIdXmlResolver {
 
     /**
      * 对常见 SqlToy id 保持较宽松的过滤规则：
-     * trace_param_fault_moduleId
+     * sql_id
      * module.queryList
      * a-b/c:test
      */

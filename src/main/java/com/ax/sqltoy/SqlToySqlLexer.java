@@ -191,6 +191,15 @@ final class SqlToySqlLexer extends LexerBase {
             return;
         }
 
+        if (current == '@' && hasSqlToyFunctionName()) {
+            int identifierEnd = scanIdentifier(tokenStart + 1);
+            if (isFunctionName(getTokenText(tokenStart + 1, identifierEnd), identifierEnd)) {
+                tokenEnd = identifierEnd;
+                tokenType = SqlToySqlTokenTypes.FUNCTION;
+                return;
+            }
+        }
+
         if (current == '-' && hasNext('-')) {
             tokenEnd = scanLineComment(tokenStart + 2);
             tokenType = SqlToySqlTokenTypes.LINE_COMMENT;
@@ -274,6 +283,15 @@ final class SqlToySqlLexer extends LexerBase {
      */
     private boolean hasNext(char expected) {
         return tokenStart + 1 < endOffset && buffer.charAt(tokenStart + 1) == expected;
+    }
+
+    /**
+     * 检查当前 @ 后面是否紧跟 SqlToy 函数名。
+     *
+     * @return @ 后面是标识符起始字符时返回 true
+     */
+    private boolean hasSqlToyFunctionName() {
+        return tokenStart + 1 < endOffset && isIdentifierStart(buffer.charAt(tokenStart + 1));
     }
 
     /**

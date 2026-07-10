@@ -37,7 +37,7 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
 
     private static final Color FUNCTION_COLOR = new Color(86, 156, 214);
     private static final Color PARAMETER_COLOR = new Color(220, 220, 120);
-    private static final Color INCLUDE_SQL_ID_COLOR = new Color(78, 201, 176);
+    private static final Color INCLUDE_SQL_ID_COLOR = new Color(104, 168, 113);
     private static final Color UNUSED_SQL_ID_COLOR = new Color(128, 128, 128);
 
     private final SqlToySqlIncludeParser includeParser = new SqlToySqlIncludeParser();
@@ -250,7 +250,6 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
 
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                 .range(element.getTextRange())
-                .enforcedTextAttributes(createIncludeSqlIdAttributes())
                 .gutterIconRenderer(new SqlToyNavigationGutterIconRenderer(
                         SqlToyIcons.JUMP_MARKER,
                         "Navigate to XML SqlToy include: " + sqlId,

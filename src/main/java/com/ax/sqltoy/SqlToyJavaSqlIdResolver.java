@@ -50,6 +50,7 @@ final class SqlToyJavaSqlIdResolver {
 
     /**
      * 第一个参数为 SqlToy sqlId 的 DAO 方法名称。
+     * todo：后续扩展，或者拿掉，业务场景，非常规引用
      */
     private static final Set<String> SQL_ID_FIRST_ARGUMENT_METHOD_NAMES = Set.of(
             "find",

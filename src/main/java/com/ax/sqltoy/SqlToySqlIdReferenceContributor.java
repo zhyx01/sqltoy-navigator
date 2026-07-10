@@ -11,13 +11,13 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 在 Java 字符串字面量上注册引用。
+ * 在 Java 字符串字面量上注册引用。业务场景：
  * <p>
  * 示例：
- * multiLightDao.findByMap(..., "trace_param_fault_moduleId", ...);
+ * multiLightDao.findByMap(..., "sql_id", ...);
  * <p>
- * 按 Ctrl 并点击 "trace_param_fault_moduleId" 可跳转到：
- * <sql id="trace_param_fault_moduleId">...</sql>
+ * 按 Ctrl 并点击 "sql_id" 可跳转到：
+ * <sql id="sql_id">...</sql>
  *
  * @author ax
  * @date 2026-05-30

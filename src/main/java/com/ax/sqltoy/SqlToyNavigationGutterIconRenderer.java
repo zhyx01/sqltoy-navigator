@@ -93,6 +93,16 @@ final class SqlToyNavigationGutterIconRenderer extends GutterIconRenderer {
     }
 
     /**
+     * 告诉编辑器该 gutter 图标是导航入口，悬停时使用可点击光标。
+     *
+     * @return 始终返回 true
+     */
+    @Override
+    public boolean isNavigateAction() {
+        return true;
+    }
+
+    /**
      * 判断两个图标渲染器是否等价。
      *
      * @param object 待比较对象

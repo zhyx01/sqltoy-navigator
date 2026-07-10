@@ -11,10 +11,13 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -140,6 +143,14 @@ final class SqlToyNavigationAction extends AnAction {
                     }
                 }
         );
+
+        InputEvent inputEvent = event.getInputEvent();
+        if (inputEvent instanceof MouseEvent mouseEvent) {
+            // gutter 图标点击时，弹窗应贴近实际点击的双向箭头位置。
+            popup.show(new RelativePoint(mouseEvent));
+            return;
+        }
+
         popup.showInBestPositionFor(event.getDataContext());
     }
 
