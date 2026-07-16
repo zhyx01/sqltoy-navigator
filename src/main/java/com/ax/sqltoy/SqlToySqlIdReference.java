@@ -43,7 +43,7 @@ public final class SqlToySqlIdReference extends PsiPolyVariantReferenceBase<PsiL
     public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
         // 解析时保持多目标结果，允许同名 XML 定义由 IDEA 弹窗让用户选择。
         List<SqlToySqlIdXmlResolver.SqlIdTarget> targets =
-                SqlToySqlIdXmlResolver.findTargets(getElement().getProject(), sqlId);
+                SqlToySqlIdXmlResolver.findDialectTargets(getElement().getProject(), sqlId);
 
         return targets.stream()
                 // 将每个 XML 目标包装成 IntelliJ 解析结果。

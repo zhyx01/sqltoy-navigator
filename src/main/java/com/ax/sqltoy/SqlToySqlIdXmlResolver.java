@@ -54,6 +54,15 @@ final class SqlToySqlIdXmlResolver {
     private static final Pattern INDEXABLE_WORD_PATTERN = Pattern.compile("[A-Za-z0-9_]+");
 
     /**
+     * 数据库方言 SQL id 前缀。Oracle 使用无前缀 id，其它数据库使用固定前缀。
+     */
+    private static final List<String> DIALECT_SQL_ID_PREFIXES = List.of(
+            "gaussdb_",
+            "postgresql_",
+            "vastbase_"
+    );
+
+    /**
      * 单个 XML 文件内按 sqlId 分组缓存的 XML 定义。
      */
     private static final Key<CachedValue<Map<String, List<SqlIdTarget>>>> XML_TARGETS_CACHE =
@@ -98,17 +107,93 @@ final class SqlToySqlIdXmlResolver {
      * @return 匹配的 XML 目标
      */
     static List<SqlIdTarget> findTargets(@NotNull Project project, @NotNull String sqlId) {
-        // 依赖文件索引和 PSI 缓存，索引未完成时直接返回空结果。
         if (DumbService.isDumb(project)) {
             return List.of();
         }
 
+        return findTargetsInProject(project, sqlId);
+    }
+
+    /**
+     * 按数据库方言等价规则查找 XML SQL 定义。
+     *
+     * @param project 当前项目
+     * @param sqlId   要查找的 sqlId
+     * @return 匹配的 XML 目标
+     */
+    static List<SqlIdTarget> findDialectTargets(@NotNull Project project, @NotNull String sqlId) {
+        if (DumbService.isDumb(project)) {
+            return List.of();
+        }
+
+        List<SqlIdTarget> result = new ArrayList<>();
+        for (String candidateSqlId : getDialectSqlIdCandidates(sqlId)) {
+            result.addAll(findTargetsInProject(project, candidateSqlId));
+        }
+
+        return result;
+    }
+
+    /**
+     * 返回数据库方言等价 sqlId 候选。
+     *
+     * @param sqlId 原始 sqlId
+     * @return 原始 id、Oracle 无前缀 id 和各数据库前缀 id
+     */
+    static List<String> getDialectSqlIdCandidates(@NotNull String sqlId) {
+        String baseSqlId = removeDialectPrefix(sqlId);
+        List<String> candidates = new ArrayList<>();
+        addCandidateSqlId(candidates, sqlId);
+        addCandidateSqlId(candidates, baseSqlId);
+        for (String prefix : DIALECT_SQL_ID_PREFIXES) {
+            addCandidateSqlId(candidates, prefix + baseSqlId);
+        }
+
+        return candidates;
+    }
+
+    /**
+     * 在项目中精确查找指定 sqlId 的 XML 定义。
+     *
+     * @param project 当前项目
+     * @param sqlId   要查找的 sqlId
+     * @return 匹配的 XML 目标
+     */
+    private static List<SqlIdTarget> findTargetsInProject(@NotNull Project project, @NotNull String sqlId) {
         List<SqlIdTarget> result = new ArrayList<>();
         for (XmlFile xmlFile : findCandidateXmlFiles(project, sqlId)) {
             result.addAll(getTargetsById(xmlFile, xmlFile.getName()).getOrDefault(sqlId, List.of()));
         }
 
         return result;
+    }
+
+    /**
+     * 移除已知数据库方言前缀，得到 Oracle 无前缀 sqlId。
+     *
+     * @param sqlId 原始 sqlId
+     * @return 去除前缀后的 sqlId
+     */
+    private static String removeDialectPrefix(@NotNull String sqlId) {
+        for (String prefix : DIALECT_SQL_ID_PREFIXES) {
+            if (sqlId.startsWith(prefix)) {
+                return sqlId.substring(prefix.length());
+            }
+        }
+
+        return sqlId;
+    }
+
+    /**
+     * 添加候选 sqlId，并保持候选列表去重和顺序稳定。
+     *
+     * @param candidates 候选列表
+     * @param sqlId      要添加的 sqlId
+     */
+    private static void addCandidateSqlId(@NotNull List<String> candidates, @NotNull String sqlId) {
+        if (!candidates.contains(sqlId)) {
+            candidates.add(sqlId);
+        }
     }
 
     /**
@@ -432,7 +517,134 @@ final class SqlToySqlIdXmlResolver {
             return "";
         }
 
-        return textRange.substring(text);
+        return removeBaseIndent(text, textRange);
+    }
+
+    /**
+     * 去掉 XML 标签内 SQL 的公共缩进，避免首行裁剪后后续行整体右移。
+     *
+     * @param text      XML 文本节点原始内容
+     * @param textRange SQL 正文范围
+     * @return 还原公共缩进后的 SQL 文本
+     */
+    private static String removeBaseIndent(@NotNull String text, @NotNull TextRange textRange) {
+        String sqlText = textRange.substring(text);
+        int baseIndentLength = getBaseIndentLength(text, textRange.getStartOffset());
+        if (baseIndentLength <= 0) {
+            return sqlText;
+        }
+
+        StringBuilder result = new StringBuilder(sqlText.length());
+        int lineStart = 0;
+        boolean firstLine = true;
+        while (lineStart < sqlText.length()) {
+            int lineEnd = findLineEnd(sqlText, lineStart);
+            int contentStart = firstLine
+                    ? lineStart
+                    : skipBaseIndent(sqlText, lineStart, lineEnd, baseIndentLength);
+            result.append(sqlText, contentStart, lineEnd);
+
+            int nextLineStart = appendLineSeparator(sqlText, lineEnd, result);
+            firstLine = false;
+            lineStart = nextLineStart;
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * 返回 SQL 首个有效字符前的基础缩进长度。
+     *
+     * @param text        XML 文本节点原始内容
+     * @param startOffset SQL 正文起始偏移量
+     * @return 基础缩进字符数
+     */
+    private static int getBaseIndentLength(@NotNull String text, int startOffset) {
+        int indentStart = startOffset;
+        while (indentStart > 0 && isIndentCharacter(text.charAt(indentStart - 1))) {
+            indentStart--;
+        }
+
+        return startOffset - indentStart;
+    }
+
+    /**
+     * 跳过单行开头的基础缩进。
+     *
+     * @param text             SQL 纯文本
+     * @param lineStart        当前行起始偏移量
+     * @param lineEnd          当前行结束偏移量
+     * @param baseIndentLength 基础缩进字符数
+     * @return 去掉基础缩进后的内容起始偏移量
+     */
+    private static int skipBaseIndent(
+            @NotNull String text,
+            int lineStart,
+            int lineEnd,
+            int baseIndentLength
+    ) {
+        int offset = lineStart;
+        int skipped = 0;
+        while (offset < lineEnd && skipped < baseIndentLength && isIndentCharacter(text.charAt(offset))) {
+            offset++;
+            skipped++;
+        }
+
+        return offset;
+    }
+
+    /**
+     * 查找当前行结束位置，不包含换行符。
+     *
+     * @param text      SQL 纯文本
+     * @param lineStart 当前行起始偏移量
+     * @return 当前行结束偏移量
+     */
+    private static int findLineEnd(@NotNull String text, int lineStart) {
+        int offset = lineStart;
+        while (offset < text.length()) {
+            char character = text.charAt(offset);
+            if (character == '\r' || character == '\n') {
+                break;
+            }
+
+            offset++;
+        }
+
+        return offset;
+    }
+
+    /**
+     * 追加原始换行符并返回下一行起始位置。
+     *
+     * @param text    SQL 纯文本
+     * @param lineEnd 当前行结束偏移量
+     * @param result  SQL 文本输出
+     * @return 下一行起始偏移量
+     */
+    private static int appendLineSeparator(@NotNull String text, int lineEnd, @NotNull StringBuilder result) {
+        if (lineEnd >= text.length()) {
+            return lineEnd;
+        }
+
+        char character = text.charAt(lineEnd);
+        result.append(character);
+        if (character == '\r' && lineEnd + 1 < text.length() && text.charAt(lineEnd + 1) == '\n') {
+            result.append('\n');
+            return lineEnd + 2;
+        }
+
+        return lineEnd + 1;
+    }
+
+    /**
+     * 检查字符是否属于缩进字符。
+     *
+     * @param character 待检查字符
+     * @return 空格或制表符时返回 true
+     */
+    private static boolean isIndentCharacter(char character) {
+        return character == ' ' || character == '\t';
     }
 
     /**

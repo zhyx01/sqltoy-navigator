@@ -210,11 +210,41 @@ final class SqlToyJavaSqlIdResolver {
      * @return 匹配的 Java 字面量 PSI 元素
      */
     static List<PsiElement> findLiteralTargets(@NotNull Project project, @NotNull String sqlId) {
-        // 索引未就绪时不做全项目扫描，避免在 Dumb Mode 中拖慢编辑器响应。
         if (DumbService.isDumb(project)) {
             return List.of();
         }
 
+        return findLiteralTargetsInProject(project, sqlId);
+    }
+
+    /**
+     * 按数据库方言等价规则查找使用指定 sqlId 的 Java 字符串字面量。
+     *
+     * @param project 当前项目
+     * @param sqlId 要搜索的 sqlId
+     * @return 匹配的 Java 字面量 PSI 元素
+     */
+    static List<PsiElement> findDialectLiteralTargets(@NotNull Project project, @NotNull String sqlId) {
+        if (DumbService.isDumb(project)) {
+            return List.of();
+        }
+
+        List<PsiElement> result = new ArrayList<>();
+        for (String candidateSqlId : SqlToySqlIdXmlResolver.getDialectSqlIdCandidates(sqlId)) {
+            result.addAll(findLiteralTargetsInProject(project, candidateSqlId));
+        }
+
+        return result;
+    }
+
+    /**
+     * 在项目中精确查找使用指定 sqlId 的 Java 字符串字面量。
+     *
+     * @param project 当前项目
+     * @param sqlId 要搜索的 sqlId
+     * @return 匹配的 Java 字面量 PSI 元素
+     */
+    private static List<PsiElement> findLiteralTargetsInProject(@NotNull Project project, @NotNull String sqlId) {
         List<PsiElement> result = new ArrayList<>();
         for (PsiJavaFile javaFile : findCandidateJavaFiles(project, sqlId)) {
             result.addAll(getLiteralTargetsById(javaFile).getOrDefault(sqlId, List.of()));

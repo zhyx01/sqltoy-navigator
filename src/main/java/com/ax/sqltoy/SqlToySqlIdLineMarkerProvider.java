@@ -64,7 +64,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
         }
 
         // 重复的 XML 定义都会作为导航目标暴露。
-        List<PsiElement> targets = SqlToySqlIdXmlResolver.findTargets(element.getProject(), sqlId)
+        List<PsiElement> targets = SqlToySqlIdXmlResolver.findDialectTargets(element.getProject(), sqlId)
                 .stream()
                 .map(SqlToySqlIdXmlResolver.SqlIdTarget::element)
                 .toList();
@@ -99,7 +99,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
             return;
         }
 
-        List<PsiElement> targets = SqlToySqlIdXmlResolver.findTargets(element.getProject(), sqlId)
+        List<PsiElement> targets = SqlToySqlIdXmlResolver.findDialectTargets(element.getProject(), sqlId)
                 .stream()
                 .map(SqlToySqlIdXmlResolver.SqlIdTarget::element)
                 .toList();
@@ -142,7 +142,7 @@ public final class SqlToySqlIdLineMarkerProvider extends RelatedItemLineMarkerPr
         }
 
         Project project = element.getProject();
-        List<PsiElement> targets = SqlToyJavaSqlIdResolver.findLiteralTargets(project, sqlId);
+        List<PsiElement> targets = SqlToyJavaSqlIdResolver.findDialectLiteralTargets(project, sqlId);
         if (targets.isEmpty()) {
             return;
         }

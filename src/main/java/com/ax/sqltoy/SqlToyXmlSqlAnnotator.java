@@ -137,7 +137,7 @@ public final class SqlToyXmlSqlAnnotator implements Annotator {
             return;
         }
 
-        if (!SqlToyJavaSqlIdResolver.findLiteralTargets(element.getProject(), sqlId).isEmpty()
+        if (!SqlToyJavaSqlIdResolver.findDialectLiteralTargets(element.getProject(), sqlId).isEmpty()
                 || !includeResolver.findIncludeTargets(element.getProject(), sqlId).isEmpty()) {
             return;
         }

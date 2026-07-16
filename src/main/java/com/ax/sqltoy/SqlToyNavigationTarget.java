@@ -7,6 +7,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
@@ -145,6 +147,11 @@ final class SqlToyNavigationTarget {
      */
     @NotNull
     private String getDisplaySqlId() {
+        String xmlIdAttributeSqlId = getXmlIdAttributeSqlId();
+        if (Objects.nonNull(xmlIdAttributeSqlId)) {
+            return xmlIdAttributeSqlId;
+        }
+
         String xmlOwnerSqlId = getContainingXmlSqlId();
         if (Objects.nonNull(xmlOwnerSqlId)) {
             return xmlOwnerSqlId;
@@ -156,6 +163,47 @@ final class SqlToyNavigationTarget {
         }
 
         return fallbackSqlId;
+    }
+
+    /**
+     * 解析 XML id 属性所属的 SQL 定义 id。
+     *
+     * @return XML id 属性中的 sqlId；目标不在 id 属性上时返回 null
+     */
+    @Nullable
+    private String getXmlIdAttributeSqlId() {
+        PsiElement current = element;
+        while (current != null) {
+            XmlTag tag = getSqlTagFromXmlIdAttribute(current);
+            if (Objects.nonNull(tag)) {
+                String sqlId = SqlToySqlIdXmlResolver.getSqlId(tag);
+                return SqlToySqlIdXmlResolver.maybeSqlId(sqlId) ? sqlId : null;
+            }
+
+            current = current.getParent();
+        }
+
+        return null;
+    }
+
+    /**
+     * 从 XML id 属性相关 PSI 元素解析所属 SQL 标签。
+     *
+     * @param current 当前 PSI 元素
+     * @return 所属 SQL 标签；不是 SQL id 属性时返回 null
+     */
+    @Nullable
+    private XmlTag getSqlTagFromXmlIdAttribute(@NotNull PsiElement current) {
+        if (current instanceof XmlAttributeValue valueElement) {
+            return SqlToySqlIdXmlResolver.getSqlTagForIdValue(valueElement);
+        }
+
+        if (current instanceof XmlAttribute attribute && "id".equals(attribute.getName())) {
+            XmlTag tag = attribute.getParent();
+            return Objects.nonNull(tag) && SqlToySqlIdXmlResolver.isSqlToySqlTag(tag) ? tag : null;
+        }
+
+        return null;
     }
 
     /**

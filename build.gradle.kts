@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.ax.sqltoy"
-version = "1.0.8"
+version = "1.0.9"
 
 dependencies {
     intellijPlatform {
@@ -21,10 +21,12 @@ intellijPlatform {
 
         changeNotes = """
             Change version :
-                1. Add navigation for sqlId references in XML files.
+                1. Added SQL navigation for multi data sources(oracle/vastbase/gaussdb/postgresql).
+                2. Optimized tooltip.
                 
                 
-                1. 添加 xml 文件中引用 sqlId 的跳转
+                1. 添加多数据源 SQL 跳转（oracle/vastbase/gaussdb/postgresql）
+                2. Tooltip 优化
         """.trimIndent()
     }
 }
