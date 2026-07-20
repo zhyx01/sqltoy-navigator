@@ -26,6 +26,7 @@ import javax.swing.JLabel;
 public final class SqlToySqlIdAnnotator implements Annotator {
 
     private static final Color UNDERLINE_COLOR = new Color(104, 168, 113);
+    private static final Color UNRESOLVED_SQL_ID_COLOR = new Color(128, 128, 128);
     private static final int TOOLTIP_MAX_WIDTH = 960;
     private static final int TOOLTIP_PADDING = 4;
     private static final String TOOLTIP_MAX_HEIGHT = "60vh";
@@ -51,6 +52,10 @@ public final class SqlToySqlIdAnnotator implements Annotator {
 
         List<SqlToySqlIdXmlResolver.SqlIdTarget> targets = SqlToySqlIdXmlResolver.findDialectTargets(element.getProject(), sqlId);
         if (targets.isEmpty()) {
+            holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                    .range(SqlToyJavaSqlIdResolver.getStringContentTextRange(literalExpression))
+                    .enforcedTextAttributes(createForegroundAttributes(UNRESOLVED_SQL_ID_COLOR))
+                    .create();
             return;
         }
 
@@ -70,6 +75,18 @@ public final class SqlToySqlIdAnnotator implements Annotator {
         TextAttributes attributes = new TextAttributes();
         attributes.setEffectColor(UNDERLINE_COLOR);
         attributes.setEffectType(EffectType.LINE_UNDERSCORE);
+        return attributes;
+    }
+
+    /**
+     * 创建仅包含前景色的文本属性。
+     *
+     * @param color 前景色
+     * @return 文本属性
+     */
+    private TextAttributes createForegroundAttributes(@NotNull Color color) {
+        TextAttributes attributes = new TextAttributes();
+        attributes.setForegroundColor(color);
         return attributes;
     }
 
