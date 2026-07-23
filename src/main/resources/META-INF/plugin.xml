@@ -20,7 +20,7 @@
         </p>
 
         <p>
-            SqlToy Navigator 可以减少手动搜索成本，让 <code>sqlId</code> 定位、SQL 查看和代码维护更加直观高效。
+            SqlToy Navigator 可以减少手动搜索成本，让 <code>sqlId</code> 定位、SQL 查看和代码维护更加直观高效。是最贴近于日常开发的跳转插件，覆盖场景多。
         </p>
 
         <h3>核心功能</h3>
@@ -28,9 +28,12 @@
             <li>支持从 Java <code>sqlId</code> 字符串跳转到 XML 中对应的 SQL 定义。</li>
             <li>支持从 XML SQL 定义跳转回 Java 使用位置。</li>
             <li>在 Java 字符串和 XML <code>id</code> 属性旁显示双向导航行标记。</li>
+            <li>添加 include 函数跳转支持。</li>
             <li>增强 XML 中 SQL 内容的编辑体验，支持 SQL 高亮、参数识别和括号匹配。</li>
             <li>支持当前 SQL 块内单词高亮，便于查看字段、别名和参数出现位置。</li>
-            <li>对未被 Java 代码引用的 XML <code>sqlId</code> 进行置灰提示。</li>
+            <li>对常量定义的 <code>sqlId</code> 添加跳转支持。</li>
+            <li>对多数据源的 <code>sqlId</code> 添加跳转支持（目前支持 oracle/vastbase/gaussdb/postgresql）。</li>
+            <li>对未被使用或者 Java 代码引用不存在的 XML <code>sqlId</code> 进行置灰提示。</li>
         </ul>
 
         <p>

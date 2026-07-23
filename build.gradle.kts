@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.ax.sqltoy"
-version = "1.0.9"
+version = "1.1.0"
 
 dependencies {
     intellijPlatform {
@@ -21,12 +21,10 @@ intellijPlatform {
 
         changeNotes = """
             Change version :
-                1. Added SQL navigation for multi data sources(oracle/vastbase/gaussdb/postgresql).
-                2. Optimized tooltip.
+                1. The sqlId referenced in the Java code does not exist, it is grayed out.\n
                 
                 
-                1. 添加多数据源 SQL 跳转（oracle/vastbase/gaussdb/postgresql）
-                2. Tooltip 优化
+                1. Java 代码中引用的 sqlId 不存在，置灰
         """.trimIndent()
     }
 }
