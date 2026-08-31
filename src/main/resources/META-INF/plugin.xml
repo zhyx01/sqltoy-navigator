@@ -71,6 +71,8 @@
                 implementationClass="com.ax.sqltoy.SqlToyXmlSqlAnnotator"/>
         <editorFactoryListener
                 implementation="com.ax.sqltoy.SqlToySqlWordOccurrenceHighlighter"/>
+        <editorFactoryListener
+                implementation="com.ax.sqltoy.SqlToySqlIdHoverHintProvider"/>
         <codeInsight.lineMarkerProvider
                 language="JAVA"
                 implementationClass="com.ax.sqltoy.SqlToySqlIdLineMarkerProvider"/>

@@ -5,17 +5,12 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
 import java.util.List;
-
-import javax.swing.JLabel;
 
 /**
  * 为能解析到 XML 定义的 Java sqlId 字符串添加可视下划线。
@@ -27,9 +22,8 @@ public final class SqlToySqlIdAnnotator implements Annotator {
 
     private static final Color UNDERLINE_COLOR = new Color(104, 168, 113);
     private static final Color UNRESOLVED_SQL_ID_COLOR = new Color(128, 128, 128);
-    private static final int TOOLTIP_MAX_WIDTH = 960;
-    private static final int TOOLTIP_PADDING = 4;
-    private static final String TOOLTIP_MAX_HEIGHT = "60vh";
+    // 红色波浪线颜色
+    private static final Color ERROR_WAVE_COLOR = new Color(255, 0, 0);
 
     /**
      * 标注存在匹配 XML 目标的 Java sqlId 字面量。
@@ -52,18 +46,19 @@ public final class SqlToySqlIdAnnotator implements Annotator {
 
         List<SqlToySqlIdXmlResolver.SqlIdTarget> targets = SqlToySqlIdXmlResolver.findDialectTargets(element.getProject(), sqlId);
         if (targets.isEmpty()) {
-            holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+            // 匹配不到时：置灰 + 红色下波浪线；ERROR 级别让编辑器右侧滚动条出现红色条纹。
+            holder.newSilentAnnotation(HighlightSeverity.ERROR)
                     .range(SqlToyJavaSqlIdResolver.getStringContentTextRange(literalExpression))
-                    .enforcedTextAttributes(createForegroundAttributes(UNRESOLVED_SQL_ID_COLOR))
+                    .enforcedTextAttributes(createErrorWaveAttributes())
                     .create();
             return;
         }
 
-        var builder = holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+        // SQL 悬浮预览由 SqlToySqlIdHoverHintProvider 提供（带复制按钮），这里只负责下划线。
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                 .range(SqlToyJavaSqlIdResolver.getStringContentTextRange(literalExpression))
-                .enforcedTextAttributes(createUnderlineAttributes());
-        builder = builder.tooltip(createSqlTooltip(targets.get(0).sqlText()));
-        builder.create();
+                .enforcedTextAttributes(createUnderlineAttributes())
+                .create();
     }
 
     /**
@@ -79,6 +74,21 @@ public final class SqlToySqlIdAnnotator implements Annotator {
     }
 
     /**
+     * 创建红色下波浪线文本属性（用于未解析的 sqlId）。
+     *
+     * @return 波浪线文本属性
+     */
+    private TextAttributes createErrorWaveAttributes() {
+        TextAttributes attributes = new TextAttributes();
+        // 保留灰色前景色，实现“置灰”效果
+        attributes.setForegroundColor(UNRESOLVED_SQL_ID_COLOR);
+        // 设置红色波浪线效果
+        attributes.setEffectColor(ERROR_WAVE_COLOR);
+        attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
+        return attributes;
+    }
+
+    /**
      * 创建仅包含前景色的文本属性。
      *
      * @param color 前景色
@@ -88,39 +98,5 @@ public final class SqlToySqlIdAnnotator implements Annotator {
         TextAttributes attributes = new TextAttributes();
         attributes.setForegroundColor(color);
         return attributes;
-    }
-
-    /**
-     * 创建用于悬浮提示的 SQL 纯文本内容。
-     *
-     * @param sqlText SQL 纯文本
-     * @return IDEA tooltip HTML
-     */
-    private String createSqlTooltip(@NotNull String sqlText) {
-        int tooltipWidth = calculateTooltipWidth(sqlText);
-        return "<html><body style='margin:0;'>"
-                + "<div style='"
-                + "width:" + tooltipWidth + "px;"
-                + "max-height:" + TOOLTIP_MAX_HEIGHT + ";"
-                + "overflow-y:auto;"
-                + "overflow-x:auto;"
-                + "box-shadow:none;"
-                + "'>"
-                + "<pre style='margin:0;white-space:pre;box-shadow:none;'>"
-                + StringUtil.escapeXmlEntities(sqlText).replace(" ", "&nbsp;")
-                + "&nbsp;"
-                + "</pre>"
-                + "</div>"
-                + "</body></html>";
-    }
-
-    private int calculateTooltipWidth(@NotNull String sqlText) {
-        FontMetrics fontMetrics = new JLabel().getFontMetrics(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-        int contentWidth = 0;
-        String[] lines = sqlText.split("\\R", -1);
-        for (String line : lines) {
-            contentWidth = Math.max(contentWidth, fontMetrics.stringWidth(line.replace("\t", "    ")));
-        }
-        return Math.min(TOOLTIP_MAX_WIDTH, contentWidth + TOOLTIP_PADDING);
     }
 }
