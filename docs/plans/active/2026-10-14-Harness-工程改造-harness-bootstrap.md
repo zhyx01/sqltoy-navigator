@@ -57,9 +57,9 @@ sqltoy-navigator/
 │   └── plans/
 │       ├── README.md                # 计划的命名、生命周期与模板
 │       ├── active/                  # 没结束的计划（待开工 / 进行中）
-│       │   └── 2026-10-14-harness-bootstrap.md
+│       │   └── 2026-10-14-Harness-工程改造-harness-bootstrap.md
 │       └── completed/               # 已结束的计划（已完成 / 已放弃），归档
-│           └── 2026-08-31-hover-hint-fix.md
+│           └── 2026-08-31-悬浮提示三处问题修复-hover-hint-fix.md
 ├── scripts/
 │   ├── verify.sh                    # 单一验证入口（与现有 release.sh 风格一致）
 │   └── verify.bat                   # Windows 对应版本
@@ -78,6 +78,8 @@ sqltoy-navigator/
 - **根目录三份入口文档各司其职、互不重复。** `AGENTS.md` 管「怎么在这里干活」，`ARCHITECTURE.md` 管「代码长什么样」，`PLANS.md` 管「在做什么、做过什么」。
 - **计划文档的留痕比结果重要。** 台账一行不删，放弃的也保留并写明原因；进行中的计划必须写明验证方式。
 - **计划文档按状态分目录存。** 没结束的放 `docs/plans/active/`，一结束就移入 `docs/plans/completed/` 归档。好处是任何时候中断，下次回来只要看 `active/` 就知道有哪些事没做完 —— 不必靠记忆，也不必翻台账。
+- **计划文件名三段式：`YYYY-MM-DD-<中文描述>-<英文短横线主题>.md`。** 中文段给人看（不打开文件就知道是什么事），英文段给工具看（`grep`、URL、跨平台检索的安全键），日期段给排序看。只写英文 slug 的问题在实践中会暴露：过两周回来看 `unresolved-sqlid-error` 还得打开文件确认自己当时想干什么。改名一律 `git mv` 并同步全部引用。
+- **提交纪律是规范的一部分，且默认动作是「不提交」。** 落盘与提交分离：执行者只负责把改动写进工作区，提交的时机与范围由人指定。这样工作区常驻「已改未提交」是正常状态而不是欠债 —— 计划文档里写的「已提交 / 未提交」因此只记事实，不驱动动作。全文见 `docs/conventions.md` 第 12 节。
 
 ---
 
@@ -133,8 +135,8 @@ sqltoy-navigator/
 
 | 阶段 | 内容 | 风险 | 产出 |
 |------|------|------|------|
-| **0** | 本方案（当前） | 无（纯新增 1 个 md） | `docs/plans/active/2026-10-14-harness-bootstrap.md` |
-| **1** | 入口层 + 计划台账 + 类清单：`AGENTS.md`、`ARCHITECTURE.md`、`PLANS.md`、`docs/index.md`、`docs/plans/README.md`、`docs/plans/completed/2026-08-31-hover-hint-fix.md`、`docs/reference/class-catalog.md`（全量登记 29 个类） | 无（纯新增） | 7 个新文件 —— ✅ **已完成** |
+| **0** | 本方案（当前） | 无（纯新增 1 个 md） | `docs/plans/active/2026-10-14-Harness-工程改造-harness-bootstrap.md` |
+| **1** | 入口层 + 计划台账 + 类清单：`AGENTS.md`、`ARCHITECTURE.md`、`PLANS.md`、`docs/index.md`、`docs/plans/README.md`、`docs/plans/completed/2026-08-31-悬浮提示三处问题修复-hover-hint-fix.md`、`docs/reference/class-catalog.md`（全量登记 29 个类） | 无（纯新增） | 7 个新文件 —— ✅ **已完成** |
 | **2** | 修 README 与现实的矛盾，类清单改为指向 catalog | 低（只改文档） | `README.md` 重写 —— ✅ **已完成** |
 | **3** | 约定与领域知识：`conventions.md`、`intellij-platform.md`、`sqltoy-semantics.md`、`branches.md`（不再另建 `docs/architecture.md` —— 架构与结构内容统一由根目录 `ARCHITECTURE.md` 承载，避免两处维护） | 无（纯新增） | 4 个新文件 —— ✅ **已完成** |
 | **4** | 机械化约束：`scripts/verify.sh` + `verify.bat`、3 个结构测试、`build.gradle.kts` 加 JUnit5 依赖。**验收标准：先让它全绿** | 中（改构建配置） | 脚本 + 测试，`verify` 输出全绿 |
@@ -162,9 +164,21 @@ sqltoy-navigator/
 
 ---
 
-## 八、当前进度与下次续接
+## 八、变更原因
 
-- **做到哪了**：阶段 1 ~ 3 已完成并提交在分支 `harness-bootstrap` 上（提交 `a2b2710` 落入口三件套与 `docs/` 骨架，`2dd16cd` 落分支约定与计划台账映射）。入口三份文档、五份领域文档、类目录、计划目录约定均已就位。
+| 日期 | 变更 |
+|------|------|
+| 2026-10-15 | 新增计划文件命名规则（日期 + 中文描述 + 英文短横线主题），并据此改名：`2026-10-14-harness-bootstrap.md` → `2026-10-14-Harness-工程改造-harness-bootstrap.md`。同步 `docs/plans/README.md` 的「命名」一节、本文件目录树与产出表、以及 `AGENTS.md` / `PLANS.md` / `docs/index.md` / `ARCHITECTURE.md` 的引用。 |
+| 2026-10-15 | 新增提交纪律要求：执行过程中**不自动提交**，`git add` / `git commit` / `git push` 等用户指示，范围也由用户指定。规则落在 `docs/conventions.md` 第 12 节（唯一事实来源），并在 `AGENTS.md` 禁区、`PLANS.md`、`docs/branches.md`、`docs/plans/README.md` 各留一条指回它的引用。 |
+| 2026-10-15 | 修正事实：进度一节记录的 `harness-bootstrap` tip 由 `a2b2710` 更新为 `1b4e7be`（中间还有 `2dd16cd`）。 |
+| 2026-10-15 | 阶段 3 的 `conventions.md` 扩了两节：第 12 节「提交纪律」、第 13 节「个人代码习惯」（承接作者本人的写法偏好，含「习惯 / 现状 / 迁移」三要素模板，并划清与 `quality/golden-principles.md`、计划文档「决策记录」的边界）。同时在 `AGENTS.md` 的任务导航表加一行「加一条代码规范 / 记一个写法习惯」，让落位路径本身可被检索。 |
+| 2026-10-15 | `conventions.md` 再加第 14 节「改动纪律：最小修改」（只改被点到的代码 / 最小改动优先 / 不做想当然的推断）。**这一条没有机械化校验，永远是人工审查项** —— 判的是意图而非代码形态，写不成断言，所以 `AGENTS.md` 的硬约束清单里单独标注它「不受阶段 4 影响」。原禁区里那条「不要为顺手优化而重构无关的类」是它的特例，已并入。 |
+
+---
+
+## 九、当前进度与下次续接
+
+- **做到哪了**：阶段 1 ~ 3 已完成并提交在分支 `harness-bootstrap` 上（提交 `a2b2710` 落入口三件套与 `docs/` 骨架，`2dd16cd` 落分支约定与计划台账映射，`1b4e7be` 落计划目录分 active/completed 与中文续接说明；当前 tip 为 `1b4e7be`）。入口三份文档、五份领域文档、类目录、计划目录约定均已就位。
 - **下次从哪接着做**：阶段 4 —— 机械化校验。先写 `scripts/verify.sh` 与 `verify.bat`，再写 3 个结构测试（`PluginXmlConsistencyTest`、`SourceConventionsTest`、`ClassCatalogTest`），验收标准是 `verify` 全绿。
 - **卡在哪**：阶段 4 需要往 `build.gradle.kts` 加 JUnit5 测试依赖，尚未获得许可。备选方案是退化成纯 `scripts/verify.sh`（命令行文本校验、零依赖、可离线跑），代价是断言能力弱一档。
 - **另有两项待表态**：阶段 5 是否接 GitHub Actions CI；是否一并放 `CLAUDE.md` / `.cursor/rules` 指针文件。

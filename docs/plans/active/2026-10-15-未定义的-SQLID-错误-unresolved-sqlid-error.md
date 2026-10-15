@@ -73,7 +73,7 @@
 - **误报风险**是这次改造的主要风险，已用「高置信位置 + 宽集合保持置灰」把范围收紧。谓词依赖方法名集合，作者在 `SqlToyJavaSqlIdResolver.java:53` 标注过 `todo：后续扩展，或者拿掉` —— 集合不准会直接影响报错范围。
 - **双击高亮**：annotator 的置灰与 inspection 的错误在同一区间会互相覆盖，行为不确定。已通过让 annotator 让位消除；这是阶段 3 存在的唯一理由。
 - **dumb mode 误报**：解析器在索引未就绪时返回空列表，若检查不加守卫会把全部 sqlId 判为未定义。两个检查都加了短路。
-- 依赖：需要 `docs/plans/active/2026-10-14-harness-bootstrap.md` 阶段 4 落地的结构测试来长期守住类目录一致性；当前一致性靠脚本人工核对。
+- 依赖：需要 `docs/plans/active/2026-10-14-Harness-工程改造-harness-bootstrap.md` 阶段 4 落地的结构测试来长期守住类目录一致性；当前一致性靠脚本人工核对。
 
 ## 决策记录
 
@@ -87,7 +87,10 @@
 
 ## 变更原因
 
-（后续对计划本身的修改记在这里）
+| 日期 | 变更 |
+|------|------|
+| 2026-10-15 | 文档改名：`2026-10-15-unresolved-sqlid-error.md` → `2026-10-15-未定义的-SQLID-错误-unresolved-sqlid-error.md`，按 `docs/plans/README.md` 的新命名规则（日期 + 中文描述 + 英文短横线主题）。用 `git mv` 保留重命名历史，并同步了 `AGENTS.md` / `PLANS.md` / `docs/index.md` / `ARCHITECTURE.md` / `docs/plans/README.md` 的引用。 |
+| 2026-10-15 | 明确提交纪律：本计划的代码与文档改动**默认只落盘、不自动提交**。上文「提交记录」里的 `d9009c7` 是历史事实，不代表后续改动会自动提交；下一次提交的时机与范围由用户指示。规则见 `docs/conventions.md` 第 12 节。 |
 
 ## 当前进度与下次续接
 

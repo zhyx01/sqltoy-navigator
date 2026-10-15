@@ -10,19 +10,20 @@
 3. 完成后把该行移到「已完成」，文档头部状态改为「已完成」，并把文档从 `docs/plans/active/` 移入 `docs/plans/completed/` 归档。
 4. **中断也不怕。** `docs/plans/active/` 里就是所有没做完的事；每个进行中的计划末尾都有一节「当前进度与下次续接」，回来接着干就从那里往下。
 5. **不要删行。** 计划被放弃也要保留，状态标「已放弃」并写明原因 —— 知道自己放弃过什么，比假装没想过更有用。
+6. **不自动提交。** 执行过程中的代码与文档改动只落盘，不 `git commit` / `git push` —— 提交时机与范围由用户指定。所以本文件里的「已提交 / 未提交」只是事实记录，不是待办。规则见 [`docs/conventions.md`](docs/conventions.md) 第 12 节。
 
 ## 进行中
 
 | 计划 | 状态 | 开始 | 范围 | 文档 |
 |------|------|------|------|------|
-| Harness 工程改造 | 阶段 3 / 6 完成（阶段 4 待确认） | 2026-10-14 | 把仓库改造成 agent-first 结构：入口地图 + 文档系统 + 机械化校验 + CI | [`docs/plans/active/2026-10-14-harness-bootstrap.md`](docs/plans/active/2026-10-14-harness-bootstrap.md) |
-| 未定义 sqlId 升级为错误提示 | 阶段 4 / 5 完成；代码已提交，待 `runIde` 冒烟 | 2026-10-15 | 新增两条 `localInspection`，把「引用了不存在的 sqlId」从置灰升级为错误（红色波浪线 + 右侧错误条纹） | [`docs/plans/active/2026-10-15-unresolved-sqlid-error.md`](docs/plans/active/2026-10-15-unresolved-sqlid-error.md) |
+| Harness 工程改造 | 阶段 3 / 6 完成（阶段 4 待确认） | 2026-10-14 | 把仓库改造成 agent-first 结构：入口地图 + 文档系统 + 机械化校验 + CI | [`docs/plans/active/2026-10-14-Harness-工程改造-harness-bootstrap.md`](docs/plans/active/2026-10-14-Harness-工程改造-harness-bootstrap.md) |
+| 未定义 sqlId 升级为错误提示 | 阶段 4 / 5 完成；上一轮代码已提交 `d9009c7`，待 `runIde` 冒烟 | 2026-10-15 | 新增两条 `localInspection`，把「引用了不存在的 sqlId」从置灰升级为错误（红色波浪线 + 右侧错误条纹） | [`docs/plans/active/2026-10-15-未定义的-SQLID-错误-unresolved-sqlid-error.md`](docs/plans/active/2026-10-15-未定义的-SQLID-错误-unresolved-sqlid-error.md) |
 
 ## 已完成
 
 | 计划 | 完成时间 | 结果 | 文档 |
 |------|----------|------|------|
-| 悬浮提示（hover）三处问题修复 | 2026-08-31 | 三处问题均修复、编译通过；**改动未提交且已丢失**，需要重做 | [`docs/plans/completed/2026-08-31-hover-hint-fix.md`](docs/plans/completed/2026-08-31-hover-hint-fix.md) |
+| 悬浮提示（hover）三处问题修复 | 2026-08-31 | 三处问题均修复、编译通过；**改动未提交且已丢失**，需要重做 | [`docs/plans/completed/2026-08-31-悬浮提示三处问题修复-hover-hint-fix.md`](docs/plans/completed/2026-08-31-悬浮提示三处问题修复-hover-hint-fix.md) |
 | sqlId 悬浮提示功能 | 2026-08-31 | 提交 `9d004ce`，位于分支 `v20260831-optimization`，**尚未合并进 `develop`** | 仅里程碑，无计划文档 |
 | 1.1.0 版本 | 2026-07-23 | 提交 `ec09069`，即当前 `develop` 的 tip | 仅里程碑，无计划文档 |
 | 1.0.5 ~ 1.0.9 系列迭代 | — | 见 `git log`；tag `v1.0.5` | 仅里程碑，无计划文档 |
@@ -34,10 +35,12 @@
 
 | 计划 | 分支 | 提交 | 内容 |
 |------|------|------|------|
-| Harness 工程改造 | `harness-bootstrap` | `a2b2710` | 文档 |
+| Harness 工程改造 | `harness-bootstrap` | `1b4e7be`（首次提交 `a2b2710`） | 文档 |
 | 未定义 sqlId 升级为错误提示 | `feat-v20261015-unresolved-sqlid-error` | `d9009c7` | 功能代码，11 个文件 |
 
 原因：harness 改造是纯文档交付，功能分支刻意**只带功能代码、不带 harness 文档**，两者互不夹带。所以本文件与 `docs/plans/*` 都只在 `harness-bootstrap` 上。
+
+**这张表只记事实，不驱动动作。** 后续改动一律先落盘、不提交；什么时候提、提到哪个分支、带哪些文件，等用户指示（见 [`docs/conventions.md`](docs/conventions.md) 第 12 节）。
 
 ## 状态取值
 

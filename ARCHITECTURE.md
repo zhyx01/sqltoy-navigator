@@ -19,14 +19,16 @@ sqltoy-navigator/
 ├── release.sh / release.bat      # 发布流程脚本（分支模型见 docs/branches.md）
 ├── docs/                         # 开发者文档
 │   ├── index.md                  # 文档总索引
+│   ├── conventions.md            # 代码约定 + 提交纪律（第 12 节）+ 最小修改（第 14 节）
 │   ├── reference/
 │   │   └── class-catalog.md      # 31 个类的职责与扩展点注册（唯一事实来源）
 │   └── plans/
-│       ├── README.md             # 计划的写法与生命周期约定
+│       ├── README.md             # 计划的写法、命名与生命周期约定
 │       ├── active/               # 没结束的计划（待开工 / 进行中）
-│       │   └── 2026-10-14-harness-bootstrap.md
+│       │   ├── 2026-10-14-Harness-工程改造-harness-bootstrap.md
+│       │   └── 2026-10-15-未定义的-SQLID-错误-unresolved-sqlid-error.md
 │       └── completed/            # 已结束的计划（已完成 / 已放弃），归档
-│           └── 2026-08-31-hover-hint-fix.md
+│           └── 2026-08-31-悬浮提示三处问题修复-hover-hint-fix.md
 └── src/
     ├── main/
     │   ├── java/com/ax/sqltoy/   # 全部源码，唯一包，31 个类

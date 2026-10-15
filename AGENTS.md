@@ -59,6 +59,8 @@
    - ⚠️ 校验必须**大小写不敏感**：现存那一处是小写 `todo`，写在 `SqlToyJavaSqlIdResolver.java:53`。按大小写敏感匹配会永远查不出这类标记。
    - 该处已不是普通待办 —— 它标在 `SQL_ID_FIRST_ARGUMENT_METHOD_NAMES` 上，而这个集合现在直接决定「未定义 sqlId」的报错范围。详见 `docs/conventions.md` 第 10 节与 `docs/sqltoy-semantics.md` 第 3 节。
 8. 不引入运行时第三方依赖（`build.gradle.kts` 的依赖块只允许 `intellijPlatform { ... }`）。
+9. **只改被点到的代码，最小修改**：没被提到的代码不能动（含顺手发现的坏味道、笔误、命名不一致）；同一需求有多种改法时选改动面最小的；需求没说的不替它补，不确定就先问。
+   - ⚠️ 这一条**不受阶段 4 影响** —— 它没有机械化校验，**永远是人工审查项**。判的是「该不该动这段代码」，是意图判断，写不成断言。详见 `docs/conventions.md` 第 14 节。
 
 ## 任务导航
 
@@ -73,14 +75,17 @@
 | 改「未定义 sqlId」报错范围 | `docs/reference/class-catalog.md` 的 G 节 | `SqlToyUnresolvedSqlIdInspection` / `SqlToyUnresolvedIncludeInspection`；开关在 `SqlToyJavaSqlIdResolver.SQL_ID_FIRST_ARGUMENT_METHOD_NAMES` |
 | 新增一个扩展点 | `docs/intellij-platform.md` | `plugin.xml` + 实现类 + 类目录 |
 | 新增数据库方言 | `docs/sqltoy-semantics.md` | `SqlToySqlIdXmlResolver` 的方言前缀表 |
+| **加一条代码规范 / 记一个写法习惯** | `docs/conventions.md`（先判断用不用校验拦住） | 软约定 → `conventions.md` 对应主题节或第 13 节；硬约束 → `docs/quality/golden-principles.md`（阶段 4）+ 本节摘要一行 |
 | 提交 / 发版 | `docs/branches.md` | — |
 
 ## 禁区
 
+- **不要自动提交。** 改完只落盘到工作区，`git add` / `git commit` / `git push` 都等用户明确说了再做；要提交时范围也由用户指定（例如「只提交功能代码，不带 harness 文档」），按点名路径逐个 `git add`，不要 `git add -A`。规则全文见 `docs/conventions.md` 第 12 节。
+- **最小修改：不动的代码不要动。** 只改任务明确点到的位置，不借机重构、改命名、清理「看起来是笔误」的地方；范围外发现的问题**报而不改**（在回复里列出，由用户决定要不要另开计划）。规则全文见 `docs/conventions.md` 第 14 节。
 - 不要改动或删除 `build/`、`.gradle/`、`.idea/`、`.intellijPlatform/`、`gradle/wrapper/`。
 - 不要改 `release.sh` / `release.bat` 的行为（要改先说明）。
 - 不要重排 `plugin.xml` 的扩展点顺序，不要改已有扩展点的 id 与实现类名（改名必须同步过校验）。
-- 不要为「顺手优化」而重构与当前任务无关的类。
+- 不要为了让 `git status` 看起来干净而提交、`stash` 或回滚 —— 工作区停在「已改未提交」是正常状态（唯一例外：从 `docs/branches.md` §6.4 的误删事故中 `git checkout -- .` 找回文件）。
 
 ## 先读哪份
 

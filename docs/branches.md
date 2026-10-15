@@ -11,7 +11,7 @@
 | `develop` | `ec09069` feat(1.1.0) | `origin/develop` | **集成分支**，日常开发提交到这里 |
 | `master` | — | `origin/master` | **发布分支**，只由发布脚本合入 |
 | `feat-v20261015-unresolved-sqlid-error` | `d9009c7` feat(1.1.1) | 未推送 | 功能分支：未定义 sqlId 升级为错误提示。**只含功能代码**，不带 harness 文档 |
-| `harness-bootstrap` | `a2b2710` docs(harness) | 未推送 | agent-first 仓库改造：入口文档 + docs 系统。**只含文档**，不含功能代码 |
+| `harness-bootstrap` | `1b4e7be` docs(plans) | 未推送 | agent-first 仓库改造：入口文档 + docs 系统。**只含文档**，不含功能代码 |
 | `v20260831-optimization` | `9d004ce` feat: optimization | `origin/v20260831-optimization` | 功能分支，**未合并** |
 | `release/v1.0.5` | — | `origin/release/v1.0.5` | 历史发布分支（已冻结） |
 | `main` | `0580807` Merge branch 'develop' | **`origin/main` 已不存在** | ⚠️ 历史遗留，**不要使用** |
@@ -142,6 +142,8 @@ cat .git/refs/heads/<分支名>
 ### 6.3 发布脚本的前置门槛
 
 `release.sh` 第 2 步要求**工作区干净**。所以发布前必须先把改动提交。实测中经常卡在这里 —— 尤其是 `build/` 下的产物（如 `build/distributions/*.zip` 曾被提交过，删掉它就成了一个待提交的改动）。
+
+⚠️ **但「发布需要提交」不等于「平时可以自动提交」。** 日常改动一律只落盘，`git add` / `git commit` / `git push` 等用户明确指示再做，范围也由用户点名（例如「只提交功能代码，不带 harness 文档」）。规则全文见 [`conventions.md`](conventions.md) 第 12 节。换句话说：**到发布时才发现工作区不干净，是正常的；在没被要求的时候把工作区清干净，是违规。**
 
 ### 6.4 `git checkout <分支>` 会误删工作区文件 ⚠️⚠️
 
