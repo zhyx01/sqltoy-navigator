@@ -10,6 +10,8 @@
 |------|-----|----------|------|
 | `develop` | `ec09069` feat(1.1.0) | `origin/develop` | **集成分支**，日常开发提交到这里 |
 | `master` | — | `origin/master` | **发布分支**，只由发布脚本合入 |
+| `feat-v20261015-unresolved-sqlid-error` | `d9009c7` feat(1.1.1) | 未推送 | 功能分支：未定义 sqlId 升级为错误提示。**只含功能代码**，不带 harness 文档 |
+| `harness-bootstrap` | `a2b2710` docs(harness) | 未推送 | agent-first 仓库改造：入口文档 + docs 系统。**只含文档**，不含功能代码 |
 | `v20260831-optimization` | `9d004ce` feat: optimization | `origin/v20260831-optimization` | 功能分支，**未合并** |
 | `release/v1.0.5` | — | `origin/release/v1.0.5` | 历史发布分支（已冻结） |
 | `main` | `0580807` Merge branch 'develop' | **`origin/main` 已不存在** | ⚠️ 历史遗留，**不要使用** |
@@ -35,7 +37,7 @@
 |------|---------|---------|
 | 集成分支 | 固定 `develop` | 所有人，日常 |
 | 发布分支 | 固定 `master` | **只由发布脚本**，不要手工推送 |
-| 功能分支 | 自由（现有：`v20260831-optimization`、`harness-bootstrap`） | 开发者自己，做完合回 `develop` |
+| 功能分支 | `feat-v<yyyyMMdd>-<描述>`（日期取**建分支当天**；历史遗留的 `v20260831-optimization` 保持原样）。**不要用带 `/` 的名字** —— 见 §6.2 | 开发者自己，做完合回 `develop` |
 | 冻结分支 | `release/vX.Y.Z` | 发布脚本创建，创建后不再接受新功能 |
 
 ## 3. 发布流程：`release.sh <版本号>`
@@ -140,6 +142,27 @@ cat .git/refs/heads/<分支名>
 ### 6.3 发布脚本的前置门槛
 
 `release.sh` 第 2 步要求**工作区干净**。所以发布前必须先把改动提交。实测中经常卡在这里 —— 尤其是 `build/` 下的产物（如 `build/distributions/*.zip` 曾被提交过，删掉它就成了一个待提交的改动）。
+
+### 6.4 `git checkout <分支>` 会误删工作区文件 ⚠️⚠️
+
+同一环境实测到比 §6.2 更危险的现象：**切换分支时，两个分支间内容相同的文件会被从工作区删掉，而被改写的文件反而保留下来** —— 与正常行为正好相反。
+
+```bash
+git checkout harness-bootstrap
+# → 打印 Switched to branch 'harness-bootstrap'
+# → 但 src/main/java/com/ax/sqltoy/ 下的类只剩 3 个（恰好是内容有差异的那 3 个）
+# → git status 显示 30 个文件「已删除」（` D`），而索引本身是正确的
+```
+
+**数据不会真丢** —— 文件仍在 git 对象里，用 `git checkout -- .` 从索引即可完整复原：
+
+```bash
+git checkout -- .      # 从索引恢复工作区
+git status --short     # 应只剩未跟踪项
+git diff --stat        # 应为空
+```
+
+**纪律：在这个环境里，任何改变工作区的 git 命令（`checkout` / `switch` / `restore` / `merge`）执行之后，都必须立刻回读一次 `git status`，不要带着异常状态继续操作。** §6.2 是静默假成功，本节是显式假删除 —— 两者根源相同：该环境的文件操作层不可信，只有 `git status` 的输出能作为判断依据。
 
 ## 7. 发布前 checklist
 

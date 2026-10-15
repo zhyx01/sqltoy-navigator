@@ -15,7 +15,7 @@
 | 计划 | 状态 | 开始 | 范围 | 文档 |
 |------|------|------|------|------|
 | Harness 工程改造 | 阶段 3 / 6 完成（阶段 4 待确认） | 2026-10-14 | 把仓库改造成 agent-first 结构：入口地图 + 文档系统 + 机械化校验 + CI | [`docs/plans/2026-10-14-harness-bootstrap.md`](docs/plans/2026-10-14-harness-bootstrap.md) |
-| 未定义 sqlId 升级为错误提示 | 阶段 4 / 5 完成，待 `runIde` 冒烟 | 2026-10-15 | 新增两条 `localInspection`，把「引用了不存在的 sqlId」从置灰升级为错误（红色波浪线 + 右侧错误条纹） | [`docs/plans/2026-10-15-unresolved-sqlid-error.md`](docs/plans/2026-10-15-unresolved-sqlid-error.md) |
+| 未定义 sqlId 升级为错误提示 | 阶段 4 / 5 完成；代码已提交，待 `runIde` 冒烟 | 2026-10-15 | 新增两条 `localInspection`，把「引用了不存在的 sqlId」从置灰升级为错误（红色波浪线 + 右侧错误条纹） | [`docs/plans/2026-10-15-unresolved-sqlid-error.md`](docs/plans/2026-10-15-unresolved-sqlid-error.md) |
 
 ## 已完成
 
@@ -26,6 +26,17 @@
 | 1.1.0 版本 | 2026-07-23 | 提交 `ec09069`，即当前 `develop` 的 tip | 仅里程碑，无计划文档 |
 | 1.0.5 ~ 1.0.9 系列迭代 | — | 见 `git log`；tag `v1.0.5` | 仅里程碑，无计划文档 |
 | 早期版本 | — | tag `1.0.0`、`0.1.1`、`0.0.1` | 仅里程碑，无计划文档 |
+
+## 计划 → 分支 / 提交
+
+**代码与计划文档可能不在同一个分支上**，别按文档所在分支去找代码。
+
+| 计划 | 分支 | 提交 | 内容 |
+|------|------|------|------|
+| Harness 工程改造 | `harness-bootstrap` | `a2b2710` | 文档 |
+| 未定义 sqlId 升级为错误提示 | `feat-v20261015-unresolved-sqlid-error` | `d9009c7` | 功能代码，11 个文件 |
+
+原因：harness 改造是纯文档交付，功能分支刻意**只带功能代码、不带 harness 文档**，两者互不夹带。所以本文件与 `docs/plans/*` 都只在 `harness-bootstrap` 上。
 
 ## 状态取值
 
