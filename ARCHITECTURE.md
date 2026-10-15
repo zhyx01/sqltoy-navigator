@@ -23,8 +23,9 @@ sqltoy-navigator/
 │   │   └── class-catalog.md      # 31 个类的职责与扩展点注册（唯一事实来源）
 │   └── plans/
 │       ├── README.md             # 计划的写法与生命周期约定
-│       ├── 2026-10-14-harness-bootstrap.md
-│       └── done/
+│       ├── active/               # 没结束的计划（待开工 / 进行中）
+│       │   └── 2026-10-14-harness-bootstrap.md
+│       └── completed/            # 已结束的计划（已完成 / 已放弃），归档
 │           └── 2026-08-31-hover-hint-fix.md
 └── src/
     ├── main/

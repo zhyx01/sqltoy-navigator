@@ -1,27 +1,28 @@
 # 计划台账
 
 > 本文件是**所有执行计划的索引**：进行中的、已完成的、放弃的都在这里留一行，历史不删除。
-> 详细计划文档放在 [`docs/plans/`](docs/plans/)，写法与生命周期约定见 [`docs/plans/README.md`](docs/plans/README.md)。
+> 详细计划文档放在 [`docs/plans/`](docs/plans/) 下：**没结束的在 `active/`，已结束的归档在 `completed/`**。写法与生命周期约定见 [`docs/plans/README.md`](docs/plans/README.md)。
 
 ## 怎么用
 
-1. 动手**前**，先在下面「进行中」加一行，并到 `docs/plans/` 建同名文档。
+1. 动手**前**，先在下面「进行中」加一行，并到 `docs/plans/active/` 建同名文档。
 2. 执行中只更新文档里的阶段表，台账保持一行。
-3. 完成后把该行移到「已完成」，并在文档头部把状态改成 `done`，文档移到 `docs/plans/done/`。
-4. **不要删行。** 计划被放弃也要保留，状态标 `dropped` 并写明原因 —— 知道自己放弃过什么，比假装没想过更有用。
+3. 完成后把该行移到「已完成」，文档头部状态改为「已完成」，并把文档从 `docs/plans/active/` 移入 `docs/plans/completed/` 归档。
+4. **中断也不怕。** `docs/plans/active/` 里就是所有没做完的事；每个进行中的计划末尾都有一节「当前进度与下次续接」，回来接着干就从那里往下。
+5. **不要删行。** 计划被放弃也要保留，状态标「已放弃」并写明原因 —— 知道自己放弃过什么，比假装没想过更有用。
 
 ## 进行中
 
 | 计划 | 状态 | 开始 | 范围 | 文档 |
 |------|------|------|------|------|
-| Harness 工程改造 | 阶段 3 / 6 完成（阶段 4 待确认） | 2026-10-14 | 把仓库改造成 agent-first 结构：入口地图 + 文档系统 + 机械化校验 + CI | [`docs/plans/2026-10-14-harness-bootstrap.md`](docs/plans/2026-10-14-harness-bootstrap.md) |
-| 未定义 sqlId 升级为错误提示 | 阶段 4 / 5 完成；代码已提交，待 `runIde` 冒烟 | 2026-10-15 | 新增两条 `localInspection`，把「引用了不存在的 sqlId」从置灰升级为错误（红色波浪线 + 右侧错误条纹） | [`docs/plans/2026-10-15-unresolved-sqlid-error.md`](docs/plans/2026-10-15-unresolved-sqlid-error.md) |
+| Harness 工程改造 | 阶段 3 / 6 完成（阶段 4 待确认） | 2026-10-14 | 把仓库改造成 agent-first 结构：入口地图 + 文档系统 + 机械化校验 + CI | [`docs/plans/active/2026-10-14-harness-bootstrap.md`](docs/plans/active/2026-10-14-harness-bootstrap.md) |
+| 未定义 sqlId 升级为错误提示 | 阶段 4 / 5 完成；代码已提交，待 `runIde` 冒烟 | 2026-10-15 | 新增两条 `localInspection`，把「引用了不存在的 sqlId」从置灰升级为错误（红色波浪线 + 右侧错误条纹） | [`docs/plans/active/2026-10-15-unresolved-sqlid-error.md`](docs/plans/active/2026-10-15-unresolved-sqlid-error.md) |
 
 ## 已完成
 
 | 计划 | 完成时间 | 结果 | 文档 |
 |------|----------|------|------|
-| 悬浮提示（hover）三处问题修复 | 2026-08-31 | 三处问题均修复、编译通过；**改动未提交且已丢失**，需要重做 | [`docs/plans/done/2026-08-31-hover-hint-fix.md`](docs/plans/done/2026-08-31-hover-hint-fix.md) |
+| 悬浮提示（hover）三处问题修复 | 2026-08-31 | 三处问题均修复、编译通过；**改动未提交且已丢失**，需要重做 | [`docs/plans/completed/2026-08-31-hover-hint-fix.md`](docs/plans/completed/2026-08-31-hover-hint-fix.md) |
 | sqlId 悬浮提示功能 | 2026-08-31 | 提交 `9d004ce`，位于分支 `v20260831-optimization`，**尚未合并进 `develop`** | 仅里程碑，无计划文档 |
 | 1.1.0 版本 | 2026-07-23 | 提交 `ec09069`，即当前 `develop` 的 tip | 仅里程碑，无计划文档 |
 | 1.0.5 ~ 1.0.9 系列迭代 | — | 见 `git log`；tag `v1.0.5` | 仅里程碑，无计划文档 |
@@ -40,12 +41,14 @@
 
 ## 状态取值
 
-| 状态 | 含义 |
-|------|------|
-| `draft` | 方案阶段，尚未动手 |
-| `active` | 正在执行 |
-| `done` | 已完成 |
-| `dropped` | 主动放弃（必须写明原因） |
+| 状态 | 含义 | 文档位于 |
+|------|------|----------|
+| 待开工 | 方案已写好，还没动手 | `docs/plans/active/` |
+| 进行中 | 正在执行 | `docs/plans/active/` |
+| 已完成 | 做完并且验证过 | `docs/plans/completed/` |
+| 已放弃 | 主动放弃（必须写明原因） | `docs/plans/completed/` |
+
+规则一句话：**只要没结束就留在 `active/`，一结束（完成或放弃）就移进 `completed/` 归档。**
 
 ## 关于「仅里程碑」那几行
 

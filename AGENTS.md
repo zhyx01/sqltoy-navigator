@@ -31,6 +31,8 @@
 | `AGENTS.md`（本文件） | 入口地图：命令、硬约束、任务导航 | 规则或命令有变化时 |
 | `ARCHITECTURE.md` | 架构与代码结构：子系统划分、类间依赖、目录 | 新增子系统或大改结构时 |
 | `PLANS.md` | 计划台账：进行中 / 已完成 | 有计划开始、完成或放弃时 |
+| `docs/plans/active/` | **没结束的计划**（待开工 / 进行中） | 计划开始、进度变化时；**接手未完成的工作先看这里** |
+| `docs/plans/completed/` | 已结束的计划（已完成 / 已放弃），归档 | 计划一结束就从 `active/` 移入 |
 | `src/main/java/com/ax/sqltoy/` | 全部插件源码（唯一包） | 改功能时 |
 | `src/main/resources/META-INF/plugin.xml` | 插件清单与**全部扩展点注册** | 新增/改名扩展点实现类时 |
 | `src/main/resources/icons/`、`META-INF/pluginIcon.svg` | 图标资源 | 改视觉时 |
@@ -86,6 +88,6 @@
 
 1. `ARCHITECTURE.md` —— 先弄清代码长什么样
 2. `docs/reference/class-catalog.md` —— 再找到要改的那个类
-3. `PLANS.md` —— 看看有没有人正在改同一块
+3. `PLANS.md` → `docs/plans/active/` —— 看看有没有人正在改同一块；要接手未完成的工作，直接看那份计划末节的「当前进度与下次续接」
 
 完整文档目录见 `docs/index.md`。
